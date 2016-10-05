@@ -61,11 +61,11 @@ how they are used, what they do, any additional information you may want to
 know, and if they have switches (-switch) what the switch does.
 This is how they all look:
 -
-### <command>: - <syntax>
-             - <syntax>
-    * <-switch> -> <explination>
-  - <what its used for>
-  * <additional information>
+### [command]: - [syntax]
+             - [syntax]
+    * [-switch] -> [explination]
+  - [what its used for]
+  * [additional information]
 -
 
 The syntax for all commands is located in the <command>.etcl file too. If the
