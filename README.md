@@ -1,23 +1,19 @@
 # Services TCL v2.2 [Mon May 12 20:26:22 2003] 'damian'
-## damian@damian.id.au
-##  The end before the new beginning.
+### Written by damian / damian@damian.id.au
+### 'The end before the new beginning.'
 
-#########################################################################
-### Information [other information you may need to know]:              ###
-#### This readme tells you information about the script you are about  ####
-#### to load, there isn't much about how to actually go about loading  ####
-#### it up though. You should have at least basic eggdrop/TCL and IRC  ####
-#### knowledge before attempting to load up this TCL, it's not for the ####
-#### stupid people.                                                    ####
-#### All commands available to use on the bot are listed in here, if   ####
-#### they aren't check through the .etcl files in the archive.         ####
-#### Please read the Must-know information before asking in the        ####
-#### channel, or by email about this script.                           ####
-###                                                                     ###
-##                                                                       ##
-#                                                                         #
+## Information [other information you may need to know]:
+This readme tells you information about the script you are about
+to load, there isn't much about how to actually go about loading
+it up though. You should have at least basic eggdrop/TCL and IRC
+knowledge before attempting to load up this TCL, it's not for the
+stupid people.
+All commands available to use on the bot are listed in here, if
+they aren't check through the .etcl files in the archive.
+Please read the Must-know information before asking in the
+channel, or by email about this script.
 
-#             Must-know information
+## Must-know information
 
 All of the information below is must-know stuff when using this TCL. Over
 time this will definately get larger and larger, so keep track with it.
@@ -58,16 +54,14 @@ time this will definately get larger and larger, so keep track with it.
 
 --
 
-             #################################################             
-             #         Commands and extra information        #             
-             #################################################             
+## Commands and extra information
 
 This bit of information shows all of the channel/query/partyline commands,
 how they are used, what they do, any additional information you may want to
 know, and if they have switches (-switch) what the switch does.
 This is how they all look:
 -
-# <command>: - <syntax>
+### <command>: - <syntax>
              - <syntax>
     * <-switch> -> <explination>
   - <what its used for>
@@ -80,10 +74,10 @@ be used in the channel. If it is /msg then it can be used in query, if there
 is a '[<channel>]' after the command, it can also be used in the channel. If
 the command is prefixed with a '.' then it is to be used in the partyline.
 
-# 8ball:    - +8ball <question>
+### 8ball:    - +8ball <question>
   - Just like a Magic 8ball
 
-# Access:   - /msg botnick access [<channel>] [<wildcard match> <-online> <-userhost> <-lm> <-ls> <-host match> <-min level> <-max level>]
+### Access:   - /msg botnick access [<channel>] [<wildcard match> <-online> <-userhost> <-lm> <-ls> <-host match> <-min level> <-max level>]
             - .access <#channel> [<wildcard match> <-online> <-userhost> <-lm> <-ls> <-host match> <-min level> <-max level>]
     * -online -> Displays if the user is online or offline
     * -userhost -> Displays a users userhost (identd@domain.com)
@@ -95,11 +89,11 @@ the command is prefixed with a '.' then it is to be used in the partyline.
   - The access list of a channel database
   * The access command also shows if a user is suspended or not, with all information associated
 
-# Addme:    - /msg botnick addme <password> <channel>
+### Addme:    - /msg botnick addme <password> <channel>
   - Add yourself to a channel (needed at startup)
   * The password in this is the 'set(adminpass)' you set in the configuration file
 
-# Adduser:  - /msg botnick adduser [<channel>] <nickname> [<level> <-userhost host> <-aop on/off> <-aov 1/0> <-protect yes/on>
+### Adduser:  - /msg botnick adduser [<channel>] <nickname> [<level> <-userhost host> <-aop on/off> <-aov 1/0> <-protect yes/on>
     * -userhost <host> -> Sets/adds this host as the users if they havent been added it sets as their only
     * -aop <..> -> Sets the AOP for the user on/off (1, on, yes = On || 0, off, no = Off)
     * -aov <..> -> Sets the AOV for the user on/off (1, on, yes = On || 0, off, no = Off)
@@ -107,7 +101,7 @@ the command is prefixed with a '.' then it is to be used in the partyline.
   - Adds a user to the channel database
   * Unlike AustNet Services, the AOP/AOV/Protect doesnt change depending on the value, it is set default to your 'set(autoadd)' in the configuration
 
-# Auth:     - /msg botnick auth <password>
+### Auth:     - /msg botnick auth <password>
             - /msg botnick id <password>
             - /msg botnick identify <password>
            -- SOCKET:
@@ -116,13 +110,13 @@ the command is prefixed with a '.' then it is to be used in the partyline.
   - Authenticate to the bot
   * All three of these commands are exactly the same
 
-# Deauth:   - /msg botnick deauth <password>
+### Deauth:   - /msg botnick deauth <password>
             - /msg botnick unid <password>
             - /msg botnick unidentify <password>
   - Deauthenticate to the bot
   * All three of these commands are exactly the same
 
-# Ban:      - /msg botnick ban [<channel>] <nickname/banmask> [<-noexpire> <-nokick> <-kickall> <-sticky> <-level level> <-banmask u|h|nu|uh|nh|nuh> <-days N> <-hours N> <-mins N> <-quick option>]
+### Ban:      - /msg botnick ban [<channel>] <nickname/banmask> [<-noexpire> <-nokick> <-kickall> <-sticky> <-level level> <-banmask u|h|nu|uh|nh|nuh> <-days N> <-hours N> <-mins N> <-quick option>]
     * -noexpire -> Sets the ban to never expire
     * -nokick -> Doesnt kick the nickname if you specify one
     * -kickall -> Kicks all nicknames matching the banmask
@@ -136,61 +130,61 @@ the command is prefixed with a '.' then it is to be used in the partyline.
   - Bans a user or host in the channel you do it in
   * The -days|-hours|-mins can be used together and will add up to the appropriate value
 
-# Clean:    - /msg botnick clean [<channel>]
+### Clean:    - /msg botnick clean [<channel>]
   - Cleans the channel modes from the channel, and sets the modelock modes back if you are under the required access level
 
-# Clist:    - /msg botnick clist <nickname> [<send to nickname>]
+### Clist:    - /msg botnick clist <nickname> [<send to nickname>]
   - Sends a nickname a Channel List (a list of all the channels they have access in), 'send to nickname' is the nickname you send to, it will send to you if you dont specify
   * This command can only be used by 'special users'
 
-# Commands: - /msg botnick commands [<channel>]
+### Commands: - /msg botnick commands [<channel>]
   - Lets you check what commands you can use in the channel
 
-# Comset:   - /msg botnick comset [<channel>] <command> <value>
+### Comset:   - /msg botnick comset [<channel>] <command> <value>
     * All of the 'command's used in here are the actual commands on the bot (most of the ones listed in this section)
   - Changes the channel command level, to disable specific level'd users to do specific commands (eg. set the op command to level 190, instead of 100)
 
-# Del:      - /msg botnick del <all|new|old|n[,n,n,n]>
+### Del:      - /msg botnick del <all|new|old|n[,n,n,n]>
     * all -> Deletes all notes currently in your notebox
     * new -> Deletes all unread notes currently in your notebox
     * old -> Deletes all read notes currently in your notebox
   - Deletes messages stored by the note/memo service
 
-# Delme:    - /msg botnick delme [<channel>]
+### Delme:    - /msg botnick delme [<channel>]
   - Deletes your own access in a channel
 
-# Deluser:  - /msg botnick deluser [<channel>] <nick1> [<nick2> <nick3> ..]
+### Deluser:  - /msg botnick deluser [<channel>] <nick1> [<nick2> <nick3> ..]
   - Deletes one or more users access in the channel
 
-# Deop:     - /msg botnick deop [<channel>] [<nick1> <nick2> <nick3> ..]
+### Deop:     - /msg botnick deop [<channel>] [<nick1> <nick2> <nick3> ..]
   - Deops you or another user in the channel
   * If you dont specify anything after 'deop' it will deop you
 
-# Devoice:  - /msg botnick devoice [<channel>] [<nick1> <nick2> <nick3> ...]
+### Devoice:  - /msg botnick devoice [<channel>] [<nick1> <nick2> <nick3> ...]
   - Devoices you or another user in the channel
   * If you dont specify anything after 'devoice' it will devoice you
 
-# Fun:      - +fun <cleanoffice|milk|milo|squish|lamebot|opers|coffee|time|bonk|lix|moo|chocolate|icecream|droolz|shagz|d0nk|slobbers|bash> [<nickname>]
+### Fun:      - +fun <cleanoffice|milk|milo|squish|lamebot|opers|coffee|time|bonk|lix|moo|chocolate|icecream|droolz|shagz|d0nk|slobbers|bash> [<nickname>]
   - Just a small joke, try out the different options (cleanoffice, milk, milo etc.) to see what they do :)
 
-# Info:     - /msg botnick info <nickname/channel>
+### Info:     - /msg botnick info <nickname/channel>
   - Get the information of a 'ChanOP' channel or nickname that is on the Services TCL
   * Unlike other commands this can be used in the channel or query
 
-# Invite:   - /msg botnick invite <channel>
+### Invite:   - /msg botnick invite <channel>
   - Invites you to a channel, you cannot use this to invite others
 
-# Kick:     - /msg botnick kick [<channel>] <nickname> [<message>]
+### Kick:     - /msg botnick kick [<channel>] <nickname> [<message>]
   - Kicks a user the channel, with a message
 
-# List:     - /msg botnick list <new|old|all[null]>
+### List:     - /msg botnick list <new|old|all[null]>
     * new -> Lists all unread notes currently in your notebox
     * old -> Lists all read notes currently in your notebox
     * all -> Lists all notes currently in your notebox
   - Lists the note/memos received by others using the Send command
   * If you don't specify an option, it will assume 'all' was chosen
 
-# Listban:  - /msg botnick listban [<channel>] [<wildcard match> <-whoset> <-whenset> <-lastactive> <-reason> <-min N> <-max N>]
+### Listban:  - /msg botnick listban [<channel>] [<wildcard match> <-whoset> <-whenset> <-lastactive> <-reason> <-min N> <-max N>]
             - .listban <channel> [<wildcard match> <-whoset> <-whenset> <-lastactive> <-reason> <-min N> <-max N>]
     * -whoset     -> Displays who set the ban
     * -whenset    -> Displays when the ban was set
@@ -201,43 +195,43 @@ the command is prefixed with a '.' then it is to be used in the partyline.
   - Shows the list of bans current in the settings of the script for that channel
   * If the banlist user has been deleted the reasons may be wrong
 
-# Mdeop:    - /msg botnick mdeop [<channel>]
+### Mdeop:    - /msg botnick mdeop [<channel>]
   - Deops everyone in the channel apart from itself
 
-# Mdevoice: - /msg botnick mdevoice [<channel>]
+### Mdevoice: - /msg botnick mdevoice [<channel>]
   - Devoices everyone in the channel
 
-# Mimic:    - +mimic <nickname>
+### Mimic:    - +mimic <nickname>
   - Says a silly quote that mimics the nickname
   * This command will mimic anyone who is listed in the set(mimic.file) file
 
-# Op:       - /msg botnick op [<channel>] [<nick1> <nick2> <nick3> ...]
+### Op:       - /msg botnick op [<channel>] [<nick1> <nick2> <nick3> ...]
   - Ops you or another user in the channel
   * If you dont specify anything after 'op' it will op you
 
-# Purge:    - /msg botnick purge
+### Purge:    - /msg botnick purge
   - Purge's your note/memo messages to remove them completely from the bot, unretrievable
 
-# Read:     - /msg botnick read <new|all|N[n,n,n]>
+### Read:     - /msg botnick read <new|all|N[n,n,n]>
     * new -> Reads all unread notes currently in your notebox
     * all -> Reads all notes currently in your notebox
   - Reads note/memos sent to you by others using the Send command
 
-# Resetdb:  - /msg botnick resetdb [<channel>] [<level>]
+### Resetdb:  - /msg botnick resetdb [<channel>] [<level>]
   - Resets the channel user database, if you specify a level it will only delete below that
   * Be careful with this, you could remove yourself :P
 
-# Seek:     - /msg botnick seek [<channel>] [<-online>] <message>
+### Seek:     - /msg botnick seek [<channel>] [<-online>] <message>
     * -online -> Sends a list of people who are online in the channel to you without letting others know
   - Sends a message to everyone who is online in the channel saying the 'message'
   * If the 'nonote' is higher then your access in the channel, this wont send any messages to others
 
-# Send:     - /msg botnick send <nick/chan[,nick/chan]> [-min N] [-max N] <message>
+### Send:     - /msg botnick send <nick/chan[,nick/chan]> [-min N] [-max N] <message>
     * -min N -> Sends note to all users in the channel(s) with an access level above/including 'N'
     * -max N -> Sends note to all users in the channel(s) with an access level below/including 'N'
   - Sends a note/memo to the nick/chan you selected.
 
-# Set:      - /msg botnick set [<channel>] <keeptopic|mode|nonote|oprestrict|restrict|mustid|tellpeak|tellset|telladd|telldel|nochanmsg|funmsg|url|log|owner|address> <newvalue>
+### Set:      - /msg botnick set [<channel>] <keeptopic|mode|nonote|oprestrict|restrict|mustid|tellpeak|tellset|telladd|telldel|nochanmsg|funmsg|url|log|owner|address> <newvalue>
     * keeptopic  -> The topic lock level
     * mode       -> The modelock feature (this is used like; set mode <level> <-mo+de-s>)
     * nonote     -> Restrict channel notes (Memo's, seeks)
@@ -260,18 +254,18 @@ the command is prefixed with a '.' then it is to be used in the partyline.
   - Change the main settings of each individual channel
   * In the next version of Services all of these settings will be working, and more *should* be added
 
-# Setfile:  - .setfile <8ball|mimic|topics|quickban> <add|del|list> [<nickname|acronym> <new setting>]
+### Setfile:  - .setfile <8ball|mimic|topics|quickban> <add|del|list> [<nickname|acronym> <new setting>]
     * 8ball    -> Changes option in the $set(8ball.file) file, can only add/list
     * mimic    -> Changes option in the $set(mimic.file) file
     * topics   -> Changes option in the $set(topics.file) file, can only add/list
     * quickban -> Changes optoin in the $set(quickban.file) file
   - Manages the 8ball, topics, quickban and mimic files by adding, deleting and listing options.
 
-# Setinfo:  - .setinfo <variable> <new setting>
+### Setinfo:  - .setinfo <variable> <new setting>
   - Changes your $set(variable) variables from within the bot
   * Only bot owner can use this, and do so with extreme care
 
-# Mainchan: - .mainchan <add|del|set|combine> <channel> [<option>]
+### Mainchan: - .mainchan <add|del|set|combine> <channel> [<option>]
     * add     -> Adds a mainchan to the bot and joins the channel
     * del     -> Removes a mainchan from the bot and parts the channel
     * set     -> Set <yes/on/1> makes the channel usable. Set <no/off/0> makes the channel unusable
@@ -279,10 +273,10 @@ the command is prefixed with a '.' then it is to be used in the partyline.
   - Toggles with the main channels and settings on the bot
   * Deleting a channel destroys the access list completely
 
-# Homechan: - .homechan <channel>
+### Homechan: - .homechan <channel>
   - Sets the homechan to 'channel'
 
-# Setme:    - /msg botnick setme <email|pass|url|asl|usemsg|autoid|aov|aop|showemail|noteonadd|noteondel|noteonset|tellbyemail> <new value>
+### Setme:    - /msg botnick setme <email|pass|url|asl|usemsg|autoid|aov|aop|showemail|noteonadd|noteondel|noteonset|tellbyemail> <new value>
     * email       -> The email the bot sends emails to for settings lower, and to let others know it
     * pass        -> Your password, used for authentication
     * url         -> Your website URL, or anything else you want to put in here
@@ -297,21 +291,21 @@ the command is prefixed with a '.' then it is to be used in the partyline.
     * noteonset   -> Sends you a note (with built in note system) when your access has changed, or you are suspended on a channel (not working yet)
     * tellbyemail -> Instead of sending notes (noteonadd, noteondel, noteonset, tellset, telladd etc.) via the note system, it will send an email every 24hrs containing all notes
 
-# Setuser:  - /msg botnick setuser [<channel>] <nickname> <level|aop|aov|protect|suspend|nickname> <new value>
+### Setuser:  - /msg botnick setuser [<channel>] <nickname> <level|aop|aov|protect|suspend|nickname> <new value>
   - Changes the settings of a user (nickname is the nickname in ALL channels)
   * You must have more access then the user you are settings unless you are 'special'
 
-# Topic:    - /msg botnick topic [<channel>] [<topic>]
+### Topic:    - /msg botnick topic [<channel>] [<topic>]
   - Changes the topic in the channel to whatever you want
 
-# Unban:    - /msg botnick unban [<channel>] <nickname|hostname|all|perms|sticky|me>
+### Unban:    - /msg botnick unban [<channel>] <nickname|hostname|all|perms|sticky|me>
     * all -> Unbans all bans in the channel that arent sticky/perminant
     * perms -> Unbans all bans in the channel that are perminant
     * sticky -> Unbans all bans in the channel that are sticky
     * me -> Unbans all bans in the channel that match your current address
   - Unbans addresses in the channel
 
-# Voice:    - /msg botnick voice [<channel>] [<nick1> <nick2> <nick3> ..]
+### Voice:    - /msg botnick voice [<channel>] [<nick1> <nick2> <nick3> ..]
   - Voices you or another user in the channel
   * If you dont specify anything after 'voice' it will voice you
 
