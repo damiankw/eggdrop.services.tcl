@@ -1,8 +1,8 @@
-###########################################################################
-###        Services TCL v2.2 [Mon May 12 20:26:22 2003] 'damian'        ###
-####           damian@testikles.net http://www.tesikles.net            ####
-####                 The end before the new beginning.                 ####
- #########################################################################
+### Services TCL v2.2 [Mon May 12 20:26:22 2003] 'damian'
+## damian@damian.id.au
+##  The end before the new beginning.
+
+#########################################################################
 ### Information [other information you may need to know]:              ###
 #### This readme tells you information about the script you are about  ####
 #### to load, there isn't much about how to actually go about loading  ####
@@ -16,9 +16,8 @@
 ###                                                                     ###
 ##                                                                       ##
 #                                                                         #
-             #################################################             
-             #             Must-know information             #             
-             #################################################             
+
+#             Must-know information
 
 All of the information below is must-know stuff when using this TCL. Over
 time this will definately get larger and larger, so keep track with it.
