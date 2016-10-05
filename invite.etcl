@@ -3,7 +3,7 @@
 ###
 
 ### INVITE:
-bind msg - invite {msg_error msg_invite}
+bind msg - invite "msg_error msg_invite"
 
 ### QUERY:
 proc msg_invite {nick uhost handle text} {
@@ -13,18 +13,18 @@ proc msg_invite {nick uhost handle text} {
     notice $nick $handle "Invalid request: Wheres the channel name?"
   } elseif {![string match #* [lindex $text 0]]} {
     notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
-  } elseif {![auth_check $nick $uhost $handle [lindex $text 0] || [level $handle [lindex $text 0]] == "0" || ![changet [lindex $text 0] active]} {
+  } elseif {![auth_check $nick $uhost $handle [lindex $text 0]] || [level $handle [lindex $text 0]] == "0" || ![changet [lindex $text 0] active] || [backup_check [lindex $text 0]]} {
     return
   } elseif {![validchan [lindex $text 0]]} {
     notice $nick $handle "Invalid request: [lindex $text 0] is not a valid channel"
-  } elseif {[level $handle [lindex $text 0]] < [comget $chan invite]} {
-    notice $nick $handle "Your level of [level $handle [lindex $text 0]] is less then the required [comget $chan invite] for this command"
+  } elseif {[level $handle [lindex $text 0]] < [comget [lindex $text 0] invite]} {
+    notice $nick $handle "Your level of [level $handle [lindex $text 0]] is less then the required [comget [lindex $text 0] invite] for this command"
   } elseif {![botisop [lindex $text 0]]} {
-    notice $nick $handle "I am not currently an operator in $chan"
-  } elseif {[onchan $nick $chan]} {
+    notice $nick $handle "I am not currently an operator in [lindex $text 0]"
+  } elseif {[onchan $nick [lindex $text 0]]} {
     notice $nick $handle "Invalid request: You may only invite yourself, and you must not be in the channel"
   } else {
-    putquick "INVITE $chan $nick"
+    putquick "INVITE $nick [lindex $text 0]"
     putcmdlog "> !$handle! ($nick!$uhost) INVITE [lindex $text 0]"
   }
 }

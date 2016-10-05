@@ -3,8 +3,8 @@
 ###
 
 ### RESETDB:
-bind msg - resetdb {msg_error msg_resetdb}
-bind pub - $set(cmd)resetdb {pub_error pub_resetdb}
+bind msg - resetdb "msg_error msg_resetdb"
+bind pub - $set(cmd)resetdb "pub_error pub_resetdb"
 
 ### CHANNEL:
 proc pub_resetdb {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_resetdb {nick uhost handle text} {
 proc all_resetdb {type nick uhost handle chan text} {
   global set botnick
   chan_settings resetdb $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"

@@ -1,0 +1,94 @@
+###
+# Usage: .setinfo <variable> <new setting>
+###
+# Usage: .setfile <8ball|mimic|topics|quickban> <add|del|list> [<nickname|acronym> <new setting>]
+###
+
+bind dcc - setinfo "dcc_error dcc_setinfo"
+bind dcc - setfile "dcc_error dcc_setfile"
+
+proc dcc_setinfo {handle idx text} {
+  global set
+  set com [string tolower [lindex $text 0]]
+  set owner 0
+  foreach nick $set(owner) {
+    if {[string tolower $handle] == [string tolower $nick]} {
+      set owner 1
+    }
+  }
+  if {!$owner} {
+    putdcc $idx "> Invalid request: only eggdrop/script owners can use this command."
+  } elseif {$com == "owner"} {
+    putdcc $idx "> Invalid request: this setting can only be set manually."
+  } elseif {$com == ""} {
+    putdcc $idx "> Invalid request: where is the variable"
+  } elseif {![info exists set($com)]} {
+    putdcc $idx "> Invalid command: setting '$com' does not exist."
+  } else {
+    setinfo $com [lrange $text 1 end]
+    getinfo
+    putcmdlog "> !$handle! Changed setting '$com' to: [lrange $text 1 end]"
+    putdcc $idx "> Successfully changed setting '$com' to: [lrange $text 1 end]"
+  }
+}
+
+proc dcc_setfile {handle idx text} {
+  global set
+  set type [string tolower [lindex $text 0]]
+  set option [string tolower [lindex $text 1]]
+  set setting [lindex $text 2]
+  set new [lrange $text 3 end]
+  if {[isspecial $handle] < "100"} {
+    putdcc $idx "> Invalid request: only special users of 100+ access can use this command."
+  } elseif {$option == ""} {
+    putdcc $idx "> Invalid request: where are the settings?"
+  } elseif {($option == "add" || $option == "del") && $setting == ""} {
+    putdcc $idx "> Invalid request: where is your new setting?"
+  } elseif {$type != "mimic" && $type != "topics" && $type != "quickban" && $type != "8ball"} {
+    putdcc $idx "> Invalid request: $type is not a valid setting file."
+  } elseif {$option != "add" && $option != "del" && $option != "list"} {
+    putdcc $idx "> Invalid request: $option isn't a valid option."
+  } elseif {$option == "add" && ($type == "topics" || $type == "8ball")} {
+    set wfile [open $set(data.dir)/$set($type.file) a+]
+    puts $wfile [lrange $text 2 end]
+    close $wfile
+    putcmdlog "> #$handle# setfile add $type: [lrange $text 2 end]"
+    putdcc $idx "> Successfully added the $type: [lrange $text 2 end]"
+  } elseif {$option == "add" && [readfile $set(data.dir)/$set($type.file) $setting] != ""} {
+    putdcc $idx "> Invalid request: $setting is already an added field in $type."
+  } elseif {$option == "add" && $new == ""} {
+    putdcc $idx "> Invalid request: where is your new settings?"
+  } elseif {$option == "add"} {
+    writefile $set(data.dir)/$set($type.file) $setting $new
+    putcmdlog "> #$handle# setfile add $type: $setting ($new)"
+    putdcc $idx "> Successfully added the field $setting to $type as: $new"
+  } elseif {$option == "del" && [readfile $set(data.dir)/$set($type.file) $setting] == ""} {
+    putdcc $idx "> Invalid request: $setting is not a valid $type field."
+  } elseif {$option == "del"} {
+    remfile $set(data.dir)/$set($type.file) $setting
+    putcmdlog "> #$handle# setfile del $type: $setting"
+    putdcc $idx "> Successfully removed the field $setting from $type."
+  } elseif {$option == "list" && ($type == "topics" || $type == "8ball")} {
+    putcmdlog "> #$handle# setfile list $type"
+    putdcc $idx "> Listing topics from $type file."
+    if {[catch {open $set(data.dir)/$set($type.file)} rfile]} {
+      putdcc $idx "> Could not open $type file for reading."
+      return
+    }
+    while {![eof $rfile]} {
+      gets $rfile line
+      if {$line != ""} {
+        putdcc $idx "- $line"
+      }
+    }
+    close $rfile
+    putdcc $idx "> End of List."
+  } elseif {$option == "list"} {
+    putcmdlog "> #$handle# setfile list $type"
+    putdcc $idx "> Listing fields in $type file."
+    foreach heading [listfile $set(data.dir)/$set($type.file)] {
+      putdcc $idx "$heading: [readfile $set(data.dir)/$set($type.file) $heading]"
+    }
+    putdcc $idx "> End of List."
+  }
+}

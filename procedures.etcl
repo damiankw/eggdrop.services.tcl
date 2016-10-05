@@ -44,14 +44,7 @@ proc -user {{nick &NA&} {chan &NA&}} {
     return
   }
   set rfile [open $set(data.dir)/$set(deluser.file) "RDONLY"]
-  while {![eof $rfile]} {
-    gets $rfile line
-    if {![string match #* $line]} {
-      if {[catch {eval $line} error]} {
-        script_error runfile "error in file '$file' ($error)"
-      }
-    }
-  }
+  eval [read $rfile]
   close $rfile
 }
 
@@ -71,14 +64,7 @@ proc +user {{nick &NA&} {chan &NA&} {handle &NA&} {uhost &NA&} {lvl &NA&} {aop &
     return
   }
   set rfile [open $set(data.dir)/$set(adduser.file) "RDONLY"]
-  while {![eof $rfile]} {
-    gets $rfile line
-    if {![string match #* $line]} {
-      if {[catch {eval $line} error]} {
-        script_error runfile "error in file '$file' ($error)"
-      }
-    }
-  }
+  eval [read $rfile]
   close $rfile
 }
 
@@ -92,6 +78,7 @@ proc +suspend {{chan &NA&} {handle &NA&} {time &NA&} {reason &NA&}} {
   } elseif {![suspend $handle $chan]} {
     setuser $handle xtra SUSPEND([string toupper $chan]) 1
     setuser $handle xtra SUSPENDR([string toupper $chan]) $reason
+    checkusers
     setuser &suspend& xtra $chan,$handle "[expr [unixtime] + $time] [timer [expr $time / 60] "-suspend $chan $handle"]"
     if {[notify $handle]} {
       notice $handle $handle "You have been suspended on $chan for [expr $time / 60] minutes"
@@ -101,6 +88,7 @@ proc +suspend {{chan &NA&} {handle &NA&} {time &NA&} {reason &NA&}} {
       killtimer [lindex [suspendinfo $chan $handle] 1]
     }
     setuser $handle xtra SUSPENDR([string toupper $chan]) $reason
+    checkusers
     setuser &suspend& xtra $chan,$handle "[expr [lindex [suspendinfo $chan $handle] 0] + $time] [timer [expr ($time / 60) + ([lindex [suspendinfo $chan $handle] 0] - [unixtime]) / 60] "-suspend $chan $handle"]"
     if {[notify $handle]} {
       notice $handle $handle "You have been suspended on $chan for an extra [expr $time / 60] minutes"
@@ -126,6 +114,7 @@ proc -suspend {{chan &NA&} {handle &NA&}} {
         killtimer [lindex $timer 2]
       }
     }
+    checkusers
     setuser &suspend& xtra $chan,$handle
   }
 }
@@ -134,6 +123,7 @@ proc -suspend {{chan &NA&} {handle &NA&}} {
 ##  Returns the 'ctime timernumber' of the suspension
 proc suspendinfo {{chan &NA&} {handle &NA&}} {
   check_error "suspendinfo channel handle" $handle &NA&
+  checkusers
   return [getuser &suspend& xtra $chan,$handle]
 }
 
@@ -306,6 +296,18 @@ proc getchannelaccess {{handle &NA&}} {
   return [string trimleft $channels " "]
 }
 
+### ISHOST: ishost <handle> <hostname>
+##  Checks if the 'handle' has the 'hostname' added to their host list
+proc ishost {{handle &NA&} {host &NA&}} {
+  check_error "ishost hostname" $host &NA&
+  foreach userhost [getuser $handle hosts] {
+    if {$userhost == $host} {
+      return "1"
+    }
+  }
+  return "0"
+}
+
 ### GETSTRING: getstring <string>
 ##  Changes 'nickname' into '*!*ident@*.isp.com' for example. Used for +ban/-ban commands
 proc getstring {{string &NA&}} {
@@ -372,7 +374,7 @@ proc access {{chan &NA&} {level 1}} {
 }
 
 ### ISMODE: ismode <mode> <type>
-##  Checks to see if a mode is a 'type' mode (channel, user, double)
+##  Checks to see if a mode is a 'type' mode (channel, user, two)
 proc ismode {{mode &NA&} {type &NA&}} {
   check_error "ismode mode type" $type &NA&
   global set
@@ -388,21 +390,9 @@ proc ismode {{mode &NA&} {type &NA&}} {
 ##  Similar to '$strip' in mIRC but removes ALL codes for bold/colour/reverse/underline
 proc charstrip {{text &NA&}} {
   check_error "charstrip text" $text &NA&
-  set r ""
-  set t 0
-  foreach c [split $text ""] {
-    if {$c == ""} {
-      set t 1
-    } elseif {$t} {
-      if {![string match \[0-9\] $c] && $c != "" && $c != "" && $c != "" && $c != ""} {
-        set r $r$c
-        set t 0
-      }
-    } elseif {$c != "" && $c != "" && $c != "" && $c != ""} {
-      set r $r$c
-    }
-  }
-  return $r
+  regsub -all {[0-9]{0,2}(,[0-9]{0,2})?} $text "" text
+  regsub -all \[\] $text "" text
+  return $text
 }
 
 ### ISNUM: isnum <text>
@@ -415,6 +405,38 @@ proc isnum {{text &NA&}} {
   return 1
 }
 
+### CONNECT_SETTINGS: connect_settings
+##  Checks settings that can't be checked when the eggdrop gets started
+proc connect_settings {} {
+  global set botnick
+  if {![istimer connect_settings]} {
+    timer 120 connect_settings
+  }
+  putlog "> Checking user status... Levels, users..."
+  putlog "> Checking banlist and suspension list..."
+  checkusers
+  foreach ban [getuser &banlist& xtra] {
+    set b_chan [lindex [replace [lindex $ban 0] , " "] 0]
+    set b_mask [lindex [replace [lindex $ban 0] , " "] 1]
+    if {$b_chan == "" || $b_mask == ""} {
+      continue
+    } elseif {![isban $b_mask $b_chan]} {
+      setuser &banlist& xtra [lindex $ban 0]
+    }
+  }
+  foreach suspend [getuser &suspend& xtra] {
+    set s_chan [lindex [replace [lindex $suspend 0] , " "] 0]
+    set s_nick [lindex [replace [lindex $suspend 0] , " "] 1]
+    if {$s_chan == "" || $s_nick == ""} {
+      continue
+    } elseif {![suspend $s_nick $s_chan] || [lindex [suspendinfo $s_chan $s_nick] 0] <= [unixtime]} {
+      -suspend $s_chan $s_nick
+    } elseif {![istimer [string trimleft [lindex [suspendinfo $s_chan $s_nick] 1] timer]]} {
+      setuser &suspend& xtra $s_chan,$s_nick "[lindex [suspendinfo $s_chan $s_nick] 0] [timer [expr ([lindex [suspendinfo $s_chan $s_nick] 0] - [unixtime]) / 60] "-suspend $s_chan $s_nick"]"
+    }
+  }
+}
+
 ### SERVER_CONNECT: server_connect
 ##  Does all the shit instead of putting it in '$init-server' variable
 proc server_connect {} {
@@ -425,9 +447,12 @@ proc server_connect {} {
       setuser $user XTRA AUTH 0
     }
   }
-  if {![info exists notify]} { set notify([string tolower $botnick]) 1 }
+  if {![info exists notify]} {
+    set notify([string tolower $botnick]) 1
+  }
   putserv "ISON :$botnick [userlist]"
   putquick "PRIVMSG #Testikles` :Loaded Services v[lindex $set(version) 0] ([ctime [unixtime]] $set(timezone))"
+  connect_settings
 }
 
 ### AUTH_AUTOMODE: auth_automode <nickname> <handle> <userhost>
@@ -439,13 +464,15 @@ proc auth_automode {{nick &NA&} {handle &NA&} {uhost &NA&}} {
   foreach chan $set(channels) {
     if {[level $handle $chan] > "0"} {
       if {![changet $chan active]} {
-        set chans "$chans, $chan \[-active\]"
+        set chans "$chans, $chan \[Not Active\]"
       } elseif {![botisop $chan]} {
-        set chans "$chans, $chan \[bot not opd\]"
+        set chans "$chans, $chan \[Bot Not Opped\]"
       } elseif {![onchan $nick $chan]} {
-        set chans "$chans, $chan \[not on\]"
+        set chans "$chans, $chan \[Not On\]"
       } elseif {[suspend $handle $chan]} {
         set chans "$chans, $chan \[Suspended\]"
+      } elseif {[aop $handle $chan] && [level $handle $chan] < [changet $chan oprestrict]} {
+        set chans "$chans, $chan \[AOP (oprestict)\]"
       } elseif {[aop $handle $chan]} {
         set chans "$chans, $chan \[AOP\]"
         if {![isop $nick $chan]} {
@@ -464,14 +491,7 @@ proc auth_automode {{nick &NA&} {handle &NA&} {uhost &NA&}} {
     return
   }
   set rfile [open $set(data.dir)/$set(auth.file) "RDONLY"]
-  while {![eof $rfile]} {
-    gets $rfile line
-    if {![string match #* $line]} {
-      if {[catch {eval $line} error]} {
-        script_error runfile "error in file '$file' ($error)"
-      }
-    }
-  }
+  eval [read $rfile]
   close $rfile
 }
 
@@ -494,14 +514,7 @@ proc deauth_automode {{nick &NA&} {handle &NA&}} {
     return
   }
   set rfile [open $set(data.dir)/$set(deauth.file) "RDONLY"]
-  while {![eof $rfile]} {
-    gets $rfile line
-    if {![string match #* $line]} {
-      if {[catch {eval $line} error]} {
-        script_error runfile "error in file '$file' ($error)"
-      }
-    }
-  }
+  eval [read $rfile]
   close $rfile
 }
 
@@ -530,6 +543,35 @@ proc auth_check {{nick &NA&} {uhost &NA&} {handle &NA&} {chan &NA&}} {
   } else {
     return 1
   }
+}
+
+### BACKUP_CHECK: backup_check <channel>
+##  Checks the 'channel' for one of the backup bots, returns if it should continue to process commands
+proc backup_check {{chan ""}} {
+  check_error "backup_check ?channel?" "" &NA&
+  global set
+  set return 0
+  if {$chan == ""} {
+    foreach botnick $set(backup) {
+      if {[getchanhost $botnick] != "" && [string tolower [nick2hand $botnick]] == [string tolower $botnick]} {
+        set return 1
+      }
+    }
+    return $return
+  }
+  if {![validchan $chan] || ![botisop $chan]} {
+    return 0
+  }
+  foreach botnick $set(backup) {
+    if {[isop $botnick $chan] && [string tolower [nick2hand $botnick]] == [string tolower $botnick]} {
+      set return 1
+    } elseif {[onchan $botnick $chan] && ![isop $botnick $chan] && [validuser $botnick] && [matchattr $botnick o] && [matchattr $botnick a] && [string tolower [nick2hand $botnick]] == [string tolower $botnick]} {
+      set return 1
+      pushmode $chan +o $botnick
+      putcmdlog "> Opped preceeding backup bot $botnick on $chan after checking for authenticity."
+    }
+  }
+  return $return
 }
 
 ### LETTERS: letters <text> <number> [<type[1/0]>]
@@ -667,7 +709,9 @@ proc ischanopchan {{chan &NA&}} {
 proc homechan {{text &NA&}} {
   check_error "homechan text" $text &NA&
   global set
-  msg $set(homechan) $text
+  if {$set(report)} {
+    msg $set(homechan) $text
+  } 
 }
 
 ### CHECK_SETTINGS: check_settings
@@ -678,25 +722,14 @@ proc check_settings {} {
     timer 120 check_settings
   }
   putlog "> Authenticating to Nickname service..."
-  msg $set(nickopi) "identify $set(password)"
+  if {$set(password) != ""} {
+    msg $set(nickopi) "identify $set(password)"
+  }
   putlog "> Checking socket settings..."
   if {$set(sockcommand)} {
     listen $set(listenport) script listen_command
   } elseif {!$set(sockcommand)} {
     catch {listen $set(listenport) off}
-  }
-  putlog "> Checking user status... Levels, users..."
-  if {![validuser &banlist&]} {
-    putlog "> Could not find bans user... adding..."
-    adduser &banlist&
-    setuser &banlist& pass &BANLIST&
-    chattr &banlist& +U
-  }
-  if {![validuser &suspend&]} {
-    putlog "> Could not find suspends user... adding..."
-    adduser &suspend&
-    setuser &suspend& pass &SUSPENSIONS&
-    chattr &suspend& +U
   }
   set cnt 0
   set cnt2 0
@@ -754,27 +787,6 @@ proc check_settings {} {
       homechan "I'm not an operator on $channel."
       putlog "> I'm not an operator on $channel, checking if another bot can op me"
       search_botop $channel
-    }
-  }
-  putlog "> Checking banlist and suspension list..."
-  foreach ban [getuser &banlist& xtra] {
-    set b_chan [lindex [replace [lindex $ban 0] , " "] 0]
-    set b_mask [lindex [replace [lindex $ban 0] , " "] 1]
-    if {$b_chan == "" || $b_mask == ""} {
-      continue
-    } elseif {![isban $b_mask $b_chan]} {
-      setuser &banlist& xtra [lindex $ban 0]
-    }
-  }
-  foreach suspend [getuser &suspend& xtra] {
-    set s_chan [lindex [replace [lindex $suspend 0] , " "] 0]
-    set s_nick [lindex [replace [lindex $suspend 0] , " "] 1]
-    if {$s_chan == "" || $s_nick == ""} {
-      continue
-    } elseif {![suspend $s_nick $s_chan] || [lindex [suspendinfo $s_chan $s_nick] 0] <= [unixtime]} {
-      -suspend $s_chan $s_nick
-    } elseif {![istimer [string trimleft [lindex [suspendinfo $s_chan $s_nick] 1] timer]]} {
-      setuser &suspend& xtra $s_chan,$s_nick "[lindex [suspendinfo $s_chan $s_nick] 0] [timer [expr ([lindex [suspendinfo $s_chan $s_nick] 0] - [unixtime]) / 60] "-suspend $s_chan $s_nick"]"
     }
   }
   putlog "> Checked all general settings..."
@@ -867,6 +879,19 @@ proc delmainchan {{chan &NA&}} {
     file delete $set(data.dir)/[file_change $chan].logfile
   }
   setinfo channels [extext $set(channels) $chan]
+  checkusers
+  foreach suspend [getuser &suspend& xtra] {
+    if {[lindex [split [lindex $suspend 0] ","] 0] == $chan} {
+      checkusers
+      setuser &suspend& xtra [lindex $suspend 0]
+    }
+  }
+  foreach ban [getuser &banlist& xtra] {
+    if {[lindex [split [lindex $ban 0] ","] 0] == $chan} {
+      checkusers
+      setuser &banlist& xtra [linex $ban 0]
+    }
+  }
 }
   
 ### ADDMAINCHAN: addmainchan <channel>
@@ -930,6 +955,8 @@ proc getinfo {} {
   set set(adminpass) [gets $rfile]
   set set(channels) [gets $rfile]
   set set(homechan) [gets $rfile]
+  set set(report) [gets $rfile]
+  set set(backup) [gets $rfile]
   set set(maxhosts) [gets $rfile]
   set set(mail.name) [gets $rfile]
   set set(mail.addr) [gets $rfile]
@@ -951,6 +978,11 @@ proc getinfo {} {
   set set(usermode) [gets $rfile]
   set set(sockcommand) [gets $rfile]
   set set(listenport) [gets $rfile]
+  set set(auth.file) [gets $rfile]
+  set set(deauth.file) [gets $rfile]
+  set set(adduser.file) [gets $rfile]
+  set set(deluser.file) [gets $rfile]
+  set set(banmask) [gets $rfile]
   close $rfile
 }
 
@@ -970,11 +1002,10 @@ proc setinfo {{var &NA&} {value &NA&}} {
   puts $wfile $set(owner)
   puts $wfile $set(password)
   puts $wfile $set(adminpass)
-  if {![info exists set(channels)]} {
-    set set(channels) $set(mainchan)
-  }
   puts $wfile $set(channels)
   puts $wfile $set(homechan)
+  puts $wfile $set(report)
+  puts $wfile $set(backup)
   puts $wfile $set(maxhosts)
   puts $wfile $set(mail.name)
   puts $wfile $set(mail.addr)
@@ -996,6 +1027,11 @@ proc setinfo {{var &NA&} {value &NA&}} {
   puts $wfile $set(usermode)
   puts $wfile $set(sockcommand)
   puts $wfile $set(listenport)
+  puts $wfile $set(auth.file)
+  puts $wfile $set(deauth.file)
+  puts $wfile $set(adduser.file)
+  puts $wfile $set(deluser.file)
+  puts $wfile $set(banmask)
   close $wfile
 }
 
@@ -1067,7 +1103,7 @@ proc noteownersend {{chan &NA&} {note &NA&}} {
   foreach owner [changet $chan owner] {
     writefile $set(data.dir)/note.[file_change $owner] [unixtime]$owner[rand 9] "[unixtime] U {} $botnick {$note}"
     if {[notify $owner]} {
-      notice $owner $owner "You just received a note from $botnick. /msg $botnick note read [notelist $handle]"
+      notice $owner $owner "You just received a note from $botnick. /msg $botnick read [llength [notelist $owner]]"
     }
   }
 }
@@ -1098,7 +1134,7 @@ proc notelist {{nick &NA&} {type all}} {
   return [string trim $return]
 }
 
-### file_change: file_change <channel>
+### FILE_CHANGE: file_change <channel>
 ##  Changes a channel name into a Windows-friendly filename (eg. #ChaNNeL/\:"*?><| into #channel---------)
 proc file_change {{file &NA&}} {
   check_error "file_change text-for-filename" $file &NA&
@@ -1201,9 +1237,8 @@ proc chan_settings {{command &NA&} {type &NA&} {nick &NA&} {uhost &NA&} {handle 
   if {$type == "c" && $command != "info"} {
     chanset $chan idle [unixtime]
   }
-  if {[level $handle $chan] >= "200" && $type != "-"} {
+  if {[level $handle $chan] >= "200" && $type != "-" && $command != "info"} {
     chanset $chan manseen [unixtime]
-
   }
   if {$type == "-"} {
     return
@@ -1220,10 +1255,7 @@ proc chan_settings {{command &NA&} {type &NA&} {nick &NA&} {uhost &NA&} {handle 
 ##  Writes 'text' to the 'filename' at the end of the line (this works in windows)
 proc write {{file &NA&} {text &NA&}} {
   check_error "write filename text" $text &NA&
-  set wfile [open $file "RDWR CREAT"]
-  while {![eof $wfile]} {
-    set line [gets $wfile]
-  }
+  set wfile [open $file a+]
   puts $wfile $text
   close $wfile
 }
@@ -1413,10 +1445,27 @@ proc remove_logfiles {} {
   }
 }
 
+### CHECKUSERS: checkusers
+##  Checks the &banlist& and &suspend users for all the required information.
+proc checkusers {} {
+  if {![validuser &banlist&]} {
+    putlog "> Could not find banlist user... adding..."
+    adduser &banlist&
+    setuser &banlist& pass &BANLIST&
+    chattr &banlist& +U
+  }
+  if {![validuser &suspend&]} {
+    putlog "> Could not find suspends user... adding..."
+    adduser &suspend&
+    setuser &suspend& pass &SUSPENSIONS&
+    chattr &suspend& +U
+  }
+}
 ### GETBANREASON: getbanreason <channel> <banmask>
 ##  Returns the ban reason for the banmask on the channel
 proc getbanreason {{chan &NA&} {ban &NA&}} {
   check_error "getbanreason channel banmask" $ban &NA&
+  checkusers
   if {[getuser &banlist& XTRA $chan,$ban] == ""} {
     return "You are banned"
   } else {
@@ -1438,20 +1487,20 @@ proc script_error {{proc &NA&} {error &NA&}} {
 ### *_ERROR: *_error <procedure> [<other shit that goes with..>]
 ##  Below this is for every command used in this script to search for bugs
 
-proc kick_error {proc nick uhost handle chan victim reason} {
-  if {[catch {$proc $nick $uhost $handle $chan $victim $reason} error]} {
+proc msg_error {proc nick uhost handle text} {
+  if {[catch {$proc $nick $uhost $handle $text} error]} {
     script_error $proc $error
   }
 }
 
-proc kick_error {proc nick uhost handle chan victim reason} {
-  if {[catch {$proc $nick $uhost $handle $chan $victim $reason} error]} {
+proc dcc_error {proc handle idx text} {
+  if {[catch {$proc $handle $idx $text} error]} {
     script_error $proc $error
   }
 }
 
-proc pub_error {proc nick uhost handle chan text} {
-  if {[catch {$proc $nick $uhost $handle $chan $text} error]} {
+proc msgm_error {proc nick uhost handle text} {
+  if {[catch {$proc $nick $uhost $handle $text} error]} {
     script_error $proc $error
   }
 }
@@ -1462,14 +1511,20 @@ proc pubm_error {proc nick uhost handle chan text} {
   }
 }
 
+proc notc_error {proc nick uhost handle text {dest ""}} {
+  if {[catch {$proc $nick $uhost $handle $text $dest} error]} {
+    script_error $proc $error
+  }
+}
+
 proc join_error {proc nick uhost handle chan} {
   if {[catch {$proc $nick $uhost $handle $chan} error]} {
     script_error $proc $error
   }
 }
 
-proc part_error {proc nick uhost handle chan} {
-  if {[catch {$proc $nick $uhost $handle $chan} error]} {
+proc part_error {proc nick uhost handle chan {text ""}} {
+  if {[catch {$proc $nick $uhost $handle $chan $text} error]} {
     script_error $proc $error
   }
 }
@@ -1504,26 +1559,8 @@ proc mode_error {proc nick uhost handle chan mode victim} {
   }
 }
 
-proc msg_error {proc nick uhost handle text} {
-  if {[catch {$proc $nick $uhost $handle $text} error]} {
-    script_error $proc $error
-  }
-}
-
-proc msgm_error {proc nick uhost handle text} {
-  if {[catch {$proc $nick $uhost $handle $text} error]} {
-    script_error $proc $error
-  }
-}
-
-proc notc_error {proc nick uhost handle text} {
-  if {[catch {$proc $nick $uhost $handle $text} error]} {
-    script_error $proc $error
-  }
-}
-
-proc dcc_error {proc handle idx text} {
-  if {[catch {$proc $handle $idx $text} error]} {
+proc pub_error {proc nick uhost handle chan text} {
+  if {[catch {$proc $nick $uhost $handle $chan $text} error]} {
     script_error $proc $error
   }
 }

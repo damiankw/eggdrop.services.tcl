@@ -3,8 +3,8 @@
 ###
 
 ### MDEOP:
-bind msg - mdeop {msg_error msg_mdeop}
-bind pub - $set(cmd)mdeop {pub_error pub_mdeop}
+bind msg - mdeop "msg_error msg_mdeop"
+bind pub - $set(cmd)mdeop "pub_error pub_mdeop"
 
 ### CHANNEL:
 proc pub_mdeop {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_mdeop {nick uhost handle text} {
 proc all_mdeop {type nick uhost handle chan text} {
   global set botnick
   chan_settings mdeop $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"

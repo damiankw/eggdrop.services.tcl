@@ -3,8 +3,8 @@
 ###
 
 ### SETUSER:
-bind msg - setuser {msg_error msg_setuser}
-bind pub - $set(cmd)setuser {pub_error pub_setuser}
+bind msg - setuser "msg_error msg_setuser"
+bind pub - $set(cmd)setuser "pub_error pub_setuser"
 
 ### CHANNEL:
 proc pub_setuser {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_setuser {nick uhost handle text} {
 proc all_setuser {type nick uhost handle chan text} {
   global set botnick
   chan_settings setuser $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
@@ -52,6 +52,8 @@ proc all_setuser {type nick uhost handle chan text} {
       notice $nick $handle "$nickname's level of [level $nickname $chan] in $chan is currently higher than or equal to your level of [level $handle $chan]"
     } elseif {$command == "level" && (![isnum $value] || [string match *.* $value])} {
       notice $nick $handle "Invalid request: $value"
+    } elseif {$command == "level" && $value >= [level $handle $chan] && [isspecial $handle $chan] < "200"} {
+      notice $nick $handle "Invalid request: Cannot setuser someone to a same level or higher than you"
     } elseif {$command == "level" && ($value > "199" || $value < "1") && [isspecial $handle $chan] == "0"} {
       notice $nick $handle "Invalid request: Valid levels are between 1 and 199"
     } elseif {$command == "level" && ($value > "200" || $value < "1")} {
@@ -115,11 +117,13 @@ proc all_setuser {type nick uhost handle chan text} {
       }
       +suspend $chan $nickname [expr $value * 60] $reason
       setuser $nickname XTRA LASTMOD($chan) "[unixtime] $handle $nick!$uhost"
-      if {[isop [hand2nick $nickname] $chan]} {
-        pushmode $chan -o [hand2nick $nickname]
-      }
-      if {[isvoice [hand2nick $nickname] $chan]} {
-        pushmode $chan -v [hand2nick $nickname]
+      foreach user [chanlist $chan] {
+        if {[isop $user $chan] && [nick2hand $user] == $nickname} {
+          pushmode $chan -o $user
+        }
+        if {[isvoice $user $chan] && [nick2hand $user] == $nickname} {
+          pushmode $chan -v $user
+        }
       }
       notice $nick $handle "Suspend for $nickname on $chan has been set to '$value minutes'"
       if {[changet $chan tellsetu]} {

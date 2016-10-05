@@ -3,8 +3,8 @@
 ###
 
 ### CLEAN:
-bind msg - clean {msg_error msg_clean}
-bind pub - $set(cmd)clean {pub_error pub_clean}
+bind msg - clean "msg_error msg_clean"
+bind pub - $set(cmd)clean "pub_error pub_clean"
 
 ### CHANNEL:
 proc pub_clean {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_clean {nick uhost handle text} {
 proc all_clean {type nick uhost handle chan text} {
   global set botnick
   chan_settings clean $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
@@ -55,24 +55,22 @@ proc all_clean {type nick uhost handle chan text} {
       }
     }
     flushmode $chan
-    if {[level $handle $chan] < [lindex [changet $chan modelock] 0]} {
-      set cnt 2
-      set mp 0
-      set mm 0
-      foreach mode [split [lindex [changet $chan modelock] 1] ""] {
-        if {$mode == "+"} {
-          set mp 1
-          set mm 0
-        } elseif {$mp} {
-          if {$mode == "l"} {
-            pushmode $chan +l [lindex [changet $chan modelock] $cnt]
-            incr cnt 1
-          } elseif {$mode == "k"} {
-            pushmode $chan +k [lindex [changet $chan modelock] $cnt]
-            incr cnt 1
-          } else {
-            pushmode $chan +$mode
-          }
+    set cnt 2
+    set mp 0
+    set mm 0
+    foreach mode [split [lindex [changet $chan modelock] 1] ""] {
+      if {$mode == "+"} {
+        set mp 1
+        set mm 0
+      } elseif {$mp} {
+        if {$mode == "l"} {
+          pushmode $chan +l [lindex [changet $chan modelock] $cnt]
+          incr cnt 1
+        } elseif {$mode == "k"} {
+          pushmode $chan +k [lindex [changet $chan modelock] $cnt]
+          incr cnt 1
+        } else {
+          pushmode $chan +$mode
         }
       }
     }

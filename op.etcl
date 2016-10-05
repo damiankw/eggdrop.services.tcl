@@ -3,19 +3,21 @@
 ###
 
 ### OP:
-bind msg - op {msg_error msg_op}
-bind pub - $set(cmd)op {pub_error pub_op}
+bind msg - op "msg_error msg_op"
+bind pub - $set(cmd)op "pub_error pub_op"
 
 ### CHANNEL:
 proc pub_op {nick uhost handle chan text} {
   global set
   chan_settings op c $nick $uhost $handle $chan $text
-  if {![validuser $handle] || [level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {![validuser $handle] || [level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {[changet $chan nochanmsg]} {
     notice $nick $handle "$set(cmd)commands have been disabled for $chan"
   } elseif {[level $handle $chan] < [comget $chan op]} {
     notice $nick $handle "Your level of [level $handle $chan] is less then the required [comget $chan op] for this command"
+  } elseif {[lindex $text 0] == "" && [level $handle $chan] < [changet $chan oprestrict]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [changet $chan oprestrict] during this OpRestriction"
   } elseif {[lindex $text 0] == ""} {
     pushmode $chan +o $nick
     putcmdlog "> !$handle! ($nick!$uhost) OP\[c\] ($chan)"
@@ -25,9 +27,7 @@ proc pub_op {nick uhost handle chan text} {
     foreach u $text {
       if {![onchan $u $chan] || [isop $u $chan]} {
         continue
-      } elseif {[string tolower $u] == [string tolower $nick]} {
-        pushmode $chan +o $u
-      } elseif {[changet $chan oprestrict] == "0"} {
+      } elseif {[changet $chan oprestrict] == "0" || [matchattr [nick2hand $u] b]} {
         set n $n,$u
         pushmode $chan +o $u
       } elseif {[nick2hand $u] != ""} {
@@ -60,6 +60,8 @@ proc msg_op {nick uhost handle text} {
     } elseif {![passwdok $handle [lindex $text 0]]} {
       notice $nick $handle "Password mismatch for $handle"
       putcmdlog "> !$handle! ($nick!$uhost) failed OP \[opermode\]"
+    } elseif {![string match #* [lindex $text 1]]} {
+      notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
     } elseif {[passwdok $handle [lindex $text 0]] && [lindex $text 1] != ""} {
       chan_settings op m $nick $uhost $handle [lindex $text 1] "*** Used Operator Power"
       pushmode [lindex $text 1] +o $nick
@@ -67,15 +69,13 @@ proc msg_op {nick uhost handle text} {
       putcmdlog "> !$handle! ($nick!$uhost) OP\[m\] [lindex $text 1] \[opermode\]"
     } elseif {[passwdok $handle [lindex $text 0]]} {
       foreach channel [comchan $nick] {
-        if {[botisop $channel] && ![isop $nick $channel] && [changet $channel active]} {
+        if {[botisop $channel] && ![isop $nick $channel]} {
           pushmode $channel +o $nick
           chan_settings op m $nick $uhost $handle $channel "*** Used Operator Power"
         }
       }
       homechan "\[$handle\]($nick!$uhost): op'd themselves on all channels - opermode"
       putcmdlog "> !$handle! ($nick!$uhost): op'd themselves on all channels \[opermode\]"
-    } else {
-      putlog ">error ;op1; $nick $uhost $handle $text"
     }
   } elseif {[lindex $text 0] == ""} {
     chan_settings op m $nick $uhost $handle [lindex $text 0] $text
@@ -91,35 +91,38 @@ proc msg_op {nick uhost handle text} {
   } elseif {[level $handle [lindex $text 0]] < [comget [lindex $text 0] op]} {
     chan_settings op m $nick $uhost $handle [lindex $text 0] $text
     notice $nick $handle "Your level of [level $handle [lindex $text 0]] is less then the required [comget [lindex $text 0] op] for this command"
+  } elseif {[lindex $text 1] == "" && [level $handle [lindex $text 0]] < [changet [lindex $text 0] oprestrict]} {
+    notice $nick $handle "Your level of [level $handle [lindex $text 0]] is less then the required [changet [lindex $text 0] oprestrict] during this OpRestriction"
   } elseif {[lindex $text 1] == ""} {
     chan_settings op m $nick $uhost $handle [lindex $text 0] $text
     pushmode [lindex $text 0] +o $nick
     putcmdlog "> !$handle! ($nick!$uhost) OP\[m\] ([lindex $text 0])"
   } else {
     chan_settings op m $nick $uhost $handle [lindex $text 0] $text
+    set chan [lindex $text 0]
     set n ""
     set no ""
-    foreach u [lrange $text 1 end] {
-      if {![onchan $u [lindex $text 0]] || [isop $u [lindex $text 0]]} {
+    foreach u $text {
+      if {![onchan $u $chan] || [isop $u $chan]} {
         continue
-      } elseif {[string tolower $u] == [string tolower $nick]} {
-        pushmode [lindex $text 0] +o $u
-      } elseif {[changet [lindex $text 0] oprestrict] > "0"} {
+      } elseif {[changet $chan oprestrict] == "0" || [matchattr [nick2hand $u] b]} {
         set n $n,$u
-        pushmode [lindex $text 0] +o $u
+        pushmode $chan +o $u
       } elseif {[nick2hand $u] != ""} {
-        if {![suspend [nick2hand $u] [lindex $text 0]] && [nickinfo [nick2hand $u] auth] && [level [nick2hand $u] [lindex $text 0]] >= [changet [lindex $text 0] oprestrict] && [nickinfo [nick2hand $u] userhost] == [getchanhost [nick2hand $u]]} {
+        if {![suspend [nick2hand $u] $chan] && [nickinfo [nick2hand $u] auth] && [level [nick2hand $u] $chan] >= [changet $chan oprestrict] && [nickinfo [nick2hand $u] userhost] == [getchanhost [nick2hand $u]]} {
           set n $n,$u
-          pushmode [lindex $text 0] +o $u
+          pushmode $chan +o $u
         } else {
           set no "$no, $u"
         } 
-      }
+      } else {
+        set no "$no, $u"
+      } 
     }
     notice $n $n "You were oped on [lindex $text 0] by $nick \[$handle\]"
     if {$no != ""} {
       notice $nick $handle "[lindex $text 0] is in OpRestrict mode, could not op these people: [string trimleft $no ", "]"
     }
-    putcmdlog "> !$handle! ($nick!$uhost) OP\[c\] ([lindex $text 0]): $text"
+    putcmdlog "> !$handle! ($nick!$uhost) OP\[m\] ([lindex $text 0]): $text"
   }
 }

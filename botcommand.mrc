@@ -1,6 +1,6 @@
-; botcommand.mrc,v 0.2 [Sat Aug 04 16:43:26 2001] by 'Cyborg-'
+; botcommand.mrc,v 0.2 [Sat Aug 04 16:43:26 2001] by 'damian'
 ; This file is to use socket commands with the 'Services TCL' created
-; by me (Cyborg-), it can be found at http://www.testikles.org in the
+; by me (damian), it can be found at http://www.testikles.org in the
 ; 'Testikles`' section.
 ; The botcommand feature was derived from 'Mp3Songs Secuirt Scripts'
 ; by Conqueror (the script that runs DVD in #Mp3Songs on irc.austnet.org)
@@ -12,9 +12,9 @@
 ; -> sockopen botcommand blueelf.testikles.org 55543
 ; it's as simple as that, to run the command use it like this;
 ; -> /botcommand <handle> <password> [<command>]
-; eg, to auth -> /botcommand Cyborg- 595823qluwnnr
-; eg, to listban -> /botcommand Cyborg- 595823qluwnnr listban #Warez * -reason
-; eg, to access -> /botcommand Cyborg- 595823qluwnnr access #Warez * -lm
+; eg, to auth -> /botcommand damian 595823qluwnnr
+; eg, to listban -> /botcommand damian 595823qluwnnr listban #Warez * -reason
+; eg, to access -> /botcommand damian 595823qluwnnr access #Warez * -lm
 ; Everything that is recieved from the bot will be put into the window '@botcommand'
 ; not come up in the active window (stops floods where you dont want it..)
 ; Have fun with it, any bugs or anything report to me at email:damian@testikles.org

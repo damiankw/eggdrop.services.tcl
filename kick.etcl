@@ -3,8 +3,8 @@
 ###
 
 ### KICK:
-bind msg - kick {msg_error msg_kick}
-bind pub - $set(cmd)kick {pub_error pub_kick}
+bind msg - kick "msg_error msg_kick"
+bind pub - $set(cmd)kick "pub_error pub_kick"
 
 ### CHANNEL:
 proc pub_kick {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_kick {nick uhost handle text} {
 proc all_kick {type nick uhost handle chan text} {
   global set botnick
   chan_settings kick $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
@@ -46,12 +46,16 @@ proc all_kick {type nick uhost handle chan text} {
     putkick $chan $nick "Why would you want to kick the channel service $botnick? :)"
   } elseif {[nick2hand [lindex $text 0]] != "" && [nickinfo [nick2hand [lindex $text 0]] userhost] == [getchanhost [lindex $text 0]] && [nickinfo [nick2hand [lindex $text 0]] auth] && [level [nick2hand [lindex $text 0]] $chan] > [level $handle $chan] && [protect [nick2hand [lindex $text 0]] $chan]} {
     notice $nick $handle "[lindex $text 0] \[[nick2hand [lindex $text 0]]\] is a protected member, and their level of [level [nick2hand [lindex $text 0]] $chan] outranks your level of [level $handle $chan]"
+  } elseif {[string tolower [lindex $text 0]] == [string tolower $set(chanop)]} {
+    notice $nick $handle "$set(chanop) (Channel Service) is a protected member, and cannot be kicked from this channel."
   } else {
     if {[lindex $text 1] == ""} {
       set r "\[$nick\] User kick requested"
     } else {
       set r "\[$nick\] [lrange $text 1 end]"
     }
+    regsub -all \\n $r "\\n" r     
+    regsub -all \\r $r "\\r" r
     putkick $chan [lindex $text 0] $r
     putcmdlog "> !$handle! ($nick!$uhost) KICK\[$type\] ($chan): [lindex $text 0] \[[charstrip $r]\]"
   }

@@ -3,8 +3,8 @@
 ###
 
 ### INFO:
-bind msg - info {msg_error msg_info}
-bind pub - $set(cmd)info {pub_error pub_info}
+bind msg - info "msg_error msg_info"
+bind pub - $set(cmd)info "pub_error pub_info"
 
 ### CHANNEL:
 proc pub_info {nick uhost handle chan text} {
@@ -23,7 +23,7 @@ proc msg_info {nick uhost handle text} {
   } elseif {[lindex $text 0] == ""} {
     notice $nick $handle "Invalid request: Wheres the channel or nickname name?"
   } else {
-    all_info m $nick $uhost $handle [lindex $text 0] 
+    all_info m $nick $uhost $handle [lindex $text 0]
   }
 }
 
@@ -33,18 +33,18 @@ proc all_info {type nick uhost handle target} {
   if {[string match #* $target]} {
     chan_settings info $type $nick $uhost $handle $target
   }
-  if {![validuser $handle] || ([string tolower $type] == "c" && [level $handle $target] == "0")} {
+  if {![validuser $handle] || (([string tolower $type] == "c" && [level $handle $target] == "0") && [string match #* $target])} {
     return 
   } elseif {[string tolower $type] == "c" && [changet $target nochanmsg]} {
     notice $nick $handle "$set(cmd)commands have been disabled for $target"
   } elseif {[string match #* $target] && [level $handle $target] < [comget $target info]} {
     notice $nick $handle "Your level of [level $handle target] is less then the required [comget $target info] for this command"
-  } elseif {[string match #* $target] && [level $handle $target] == "0"} {
+  } elseif {[string match #* $target] && [level $handle $target] == "0" || [backup_check $target]} {
     return
   } elseif {[string match #* $target] && ![validchan $target]} {
     notice $nick $handle "Invalid request: $target is not a valid channel"
   } elseif {[string match #* $target] && ![changet $target active]} {
-    notice $nick $handle "$target is not currently being supervised by Services"
+    notice $nick $handle "Invalid request: $target isn't currently activated"
   } elseif {[string match #* $target]} {
     if {[changet $target quota] == "0"} {
       set quota Unlimited

@@ -1,8 +1,8 @@
 
 #!/bin/sh
-# botcommand,v 0.2 [Sat Aug 04 16:43:26 2001] by 'Cyborg-'
+# botcommand,v 0.2 [Sat Aug 04 16:43:26 2001] by 'damian'
 # This file is to use socket commands with the 'Services TCL' created
-# by me (Cyborg-), it can be found at http://www.testikles.org in the
+# by me (damian), it can be found at http://www.testikles.org in the
 # 'Testikles`' section.
 # The botcommand feature was derived from 'Mp3Songs Secuirt Scripts'
 # by Conqueror (the script that runs DVD in #Mp3Songs on irc.austnet.org)
@@ -18,7 +18,7 @@
 # -> set bcom(port) 55543
 # it's as simple as that, to run the command use it like this;
 # -> /botcommand <handle> <password>
-# eg, to auth -> /botcommand Cyborg- 595823qluwnnr
+# eg, to auth -> /botcommand damian 595823qluwnnr
 # Have fun with it, any bugs or anything report to me at email:damian@testikles.org
 
 # Thanks for this file go to ]-[unter on AustNet (irc.austnet.org) for supplying me

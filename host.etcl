@@ -1,0 +1,46 @@
+###
+# Usage: /msg botnick host <add|del|list> [<host>]
+###
+
+bind msg - host "msg_error msg_host"
+
+proc msg_host {nick uhost handle text} {
+  global set
+  if {$handle == "*" && [nickinfo $nick userhost] == [getchanhost $nick]} {
+    set handle $nick
+  }
+  if {![validuser $handle]} {
+    return
+  } elseif {![nickinfo $handle auth]} {
+    notice $nick $handle "You are not yet authenticated."
+  } elseif {[nickinfo $handle userhost] != $uhost} {
+    notice $nick $handle "Your current userhost of '$uhost' is not the one you authenticated with."
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Need argument."
+  } elseif {[lindex $text 0] == "list"} {
+    notice $nick $handle "*** Host list for $handle ***"
+    set num 1
+    foreach host [getuser $handle hosts] {
+      notice $nick $handle "[align $num 5 ] $host"
+      incr num 1
+    }
+    notice $nick $handle "You have [expr $set(maxhosts) - [llength [getuser $handle hosts]]] userhost slots left"
+    notice $nick $handle "*** End of List ***"
+  } elseif {([lindex $text 0] == "add" || [lindex $text 0] == "del") && [lindex $text 1] == ""} {
+    notice $nick $handle "Invalid request: No hostmask specified."
+  } elseif {[llength [getuser $handle hosts]] > $set(maxhosts)} {
+    notice $nick $handle "You don't have any userhost slots left."
+  } elseif {[lindex $text 0] == "add" && [ishost $handle [getstring [lindex $text 1]]]} {
+    notice $nick $handle "[getstring [lindex $text 1]] is already in $handle."
+  } elseif {[lindex $text 0] == "add"} {
+    setuser $handle hosts [getstring [lindex $text 1]]
+    notice $nick $handle "[getstring [lindex $text 1]] added to $handle."
+  } elseif {[lindex $text 0] == "del" && ![ishost $handle [getstring [lindex $text 1]]]} {
+    notice $nick $handle "[getstring [lindex $text 1]] was not found in $handle."
+  } elseif {[lindex $text 0] == "del"} {
+    delhost $handle [getstring [lindex $text 1]]
+    notice $nick $handle "[getstring [lindex $text 1]] removed from $handle."
+  } else {
+    notice $nick $handle "Invalid request: Incorrect syntax."
+  }
+}

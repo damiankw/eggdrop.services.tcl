@@ -1,10 +1,10 @@
 ###
-# Usage: /msg botnick adduser [<channel>] <nickname> [<level> <-userhost host> <-aop on/off> <-aov 1/0> <-protect yes/on>
+# Usage: /msg botnick adduser [<channel>] <nickname> [<level> <-userhost host> <-aop on/off> <-aov 1/0> <-protect yes/no>
 ###
 
 ### ADDUSER:
-bind msg - adduser {msg_error msg_adduser}
-bind pub - $set(cmd)adduser {pub_error pub_adduser}
+bind msg - adduser "msg_error msg_adduser"
+bind pub - $set(cmd)adduser "pub_error pub_adduser"
 
 ### CHANNEL:
 proc pub_adduser {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_adduser {nick uhost handle text} {
 proc all_adduser {type nick uhost handle chan text} {
   global set botnick
   chan_settings adduser $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
@@ -48,8 +48,8 @@ proc all_adduser {type nick uhost handle chan text} {
     notice $nick $handle "[lindex $text 0] already exists in the $chan database as [nick2hand [lindex $text 0]], using hosts: [getuser [nick2hand [lindex $text 0]] HOSTS]"
   } elseif {[llength [access $chan]] >= [changet $chan quota] && [changet $chan quota] != "0"} {
     notice $nick $handle "The $chan database has [llength [access $chan]] users added and the quota is full, you may not add [lindex $text 0] here"
-  } elseif {[string match *tomm0@* [getchanhost [lindex $text 0]]] || [string match "*21693.optushome.com.au" [getchanhost [lindex $text 0]]] || [string tolower [lindex $text 0]] == "m0rph"} {
-    notice $nick $handle "Sorry, this faggot (m0rph) cannot be added to this bot."
+  } elseif {[string tolower [lindex $text 0]] == [string tolower $set(chanop)]} {
+    notice $nick $handle "$set(chanop) (Channel Service) is unable to recieve access in any channels, as they cannot use it."
   } else {
     set cnt 0
     set uh [maskhost [lindex $text 0]![getchanhost [lindex $text 0]]]

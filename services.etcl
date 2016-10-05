@@ -1,16 +1,20 @@
 ## All the shit below is to do with *real* Services from the Network
 
-bind notc - "*please choose another*" {notc_error notc_nickopauth}
-bind notc - "*identified yourself*" {notc_error notc_nickopauth}
-bind notc - "*information concerning*" {notc_error notc_nickopkill}
-bind notc - * {notc_error notc_notes}
+bind notc - "*please choose another*" "notc_error serv_nickopauth"
+bind msgm - "*please choose another*" "msgm_error serv_nickopauth"
+bind notc - "*identified yourself*" "notc_error serv_nickopauth"
+bind msgm - "*identified yourself*" "msgm_error serv_nickopauth"
+bind notc - "*information concerning*" "notc_error serv_nickopkill"
+bind msgm - "*information concerning*" "msgm_error serv_nickopkill"
+bind notc - * "notc_error serv_notes"
+bind msgm - * "msgm_error serv_notes"
 
 # For identifying to NickOP
-proc notc_nickopauth {nick uhost handle text} {
+proc serv_nickopauth {nick uhost handle text} {
   global set
   if {$set(password) == ""} {
     putlog "> Attempted to authenticate to $set(nickop) but no password set..."
-  } elseif {[string tolower $set(nickop)] == [string tolower $nick]} {
+  } elseif {[string tolower $set(nickop)] == [string tolower $nick] || [string tolower $set(noteop)] == [string tolower $nick] || [string tolower $set(chanop)] == [string tolower $nick]} {
     putquick "PRIVMSG $set(nickopi) :identify $set(password)"
     putlog "> $nick ($uhost) requested authentication... auto-authenticating"
   } else {
@@ -19,7 +23,7 @@ proc notc_nickopauth {nick uhost handle text} {
 }
 
 # For killing a dead nickname
-proc notc_nickopkill {tnick uhost handle text} {
+proc serv_nickopkill {tnick uhost handle text} {
   global set nick botnick
   if {[string tolower $botnick] != [string tolower $nick] && [string tolower $tnick] == [string tolower $set(nickop)]} {
     putquick "PRIVMSG $set(nickopi) :kill $nick $set(password)"
@@ -32,7 +36,7 @@ proc notc_nickopkill {tnick uhost handle text} {
 # NoteOP forwarding to eggdrop
 set set(tempnote) ""
 set set(tempcnote) ""
-proc notc_notes {nick uhost handle text} {
+proc serv_notes {nick uhost handle text} {
   global set
   if {[string tolower $set(noteop)] == [string tolower $nick]} {
     if {[string match "You just received a note from *. /msg NoteOP read *" $text]} {

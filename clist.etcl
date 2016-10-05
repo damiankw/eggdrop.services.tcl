@@ -3,7 +3,7 @@
 ###
 
 ### CLIST:
-bind msg - clist {msg_error msg_clist}
+bind msg - clist "msg_error msg_clist"
 
 ### CHANNEL:
 proc pub_clist {nick uhost handle chan text} {
@@ -16,6 +16,7 @@ proc pub_clist {nick uhost handle chan text} {
 proc msg_clist {nick uhost handle text} {
   global set botnick
   if {![validuser $handle] || [isspecial $handle] == "0"} {
+    return
   } elseif {![nickinfo $handle auth]} {
     notice $nick $handle "You are not yet authenticated."
   } elseif {[nickinfo $handle userhost] != $uhost} {

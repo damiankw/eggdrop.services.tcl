@@ -1,22 +1,18 @@
 ###########################################################################
-###       Services TCL v2.1a [Wed Jan 30 19:22:54 2002] 'Cyborg-'       ###
-####           damian@testikles.org http://www.tesikles.org            ####
-####                      History repeats itself.                      ####
+###        Services TCL v2.2 [Mon May 12 20:26:22 2003] 'damian'        ###
+####           damian@testikles.net http://www.tesikles.net            ####
+####                 The end before the new beginning.                 ####
  #########################################################################
 ### Information [other information you may need to know]:              ###
-#### This readme file is basically to tell you about what you need to  ####
-chanset
-#### set up before you actually use the TCL. This TCL isn't for the    ####
-#### users who know nothing about eggdrop, IRC or TCL, you must have   ####
-#### at least some knowledge of all three, or the set up process will  ####
-#### be difficult for you.                                             ####
-#### Over all the setup is simple, you edit a few files, add a few (if ####
-#### they arent already with the TCL) and then load it.                ####
-#### Hint: before looking through this readme, take a look through the ####
-#### 'conf.doc' file that came with this one and edit the              ####
-#### 'services.doc' file to change to your own settings, if you do it  ####
-#### before you have a glance through this one you will understand the ####
-#### files and settings in this much better.                           ####
+#### This readme tells you information about the script you are about  ####
+#### to load, there isn't much about how to actually go about loading  ####
+#### it up though. You should have at least basic eggdrop/TCL and IRC  ####
+#### knowledge before attempting to load up this TCL, it's not for the ####
+#### stupid people.                                                    ####
+#### All commands available to use on the bot are listed in here, if   ####
+#### they aren't check through the .etcl files in the archive.         ####
+#### Please read the Must-know information before asking in the        ####
+#### channel, or by email about this script.                           ####
 ###                                                                     ###
 ##                                                                       ##
 #                                                                         #
@@ -24,73 +20,42 @@ chanset
              #             Must-know information             #             
              #################################################             
 
-All  of the information below is must-know stuff when using this TCL.  Over
-time  this  will definately get larger and larger, so keep track  with  it.
+All of the information below is must-know stuff when using this TCL. Over
+time this will definately get larger and larger, so keep track with it.
 
-- This  TCL has only been tested on eggdrop v1.4.3, v1.4.4, v1.4.5. I  know
-  it  will  not  work on any version above 1.5.0, and it may  not  work  on
-  versions  lower then 1.4.0. There is a stop feature in the TCL to prevent
-  it from working on these versions and crashing your bot, so beware!
+- The TCL has only been tested on eggdrop v1.4.3, v1.4.4, v1.4.5. I know it
+  will not work on any version above 1.5.0, and it may not work on versions
+  lower than 1.4.0. There is a stop feature in the TCL to prevent it from
+  working on these versions and crashing your bot, so beware!
 
-- This  version is an alpha version of the Services TCL, released so people
-  would  be quiet and stop annoying me with 'release v2.1!', it comes  with
-  no  support from #Testikles`, if you go in there, or message me for help,
-  you will be ignored, no questions asked.
+- If you get warnings about action_part, or anything similar chances are
+  you loaded the TCL into an uncompatable version of eggdrop, see above! ^
 
-- If  people dont read this its their fault. Before you can use this script
-  in  any  channels,  you must add yourself. How do you do  this?  Use  the
-  'addme'  command. The usage of it is simple (/msg botnick addme  password
-  channel), a better syntax and cripe is written below.
+- If people dont read this its their fault. Before you can use this script
+  in any channels, you must add yourself. How do you do this? Use the
+  'addme' command. The usage of it is simple (/msg botnick addme password
+  channel). A more advanced help is below in the Commands section.
 
-- These  Services will not work like normal services, they are connected to
-  a  server via another server (the services server), which these  services
-  DO  NOT  HAVE. Trying to connect them will just end in tragety.  It's  an
-  eggdrop,  connect  like you would any other client to IRC. I  may  remake
-  them in *proper* TCL so they can run, but until then who knows.
+- These Services will not work like normal services. They are connected as
+  a normal client to the server, therefore will work just as any other bot
+  does.
 
-- There  are  a  few things I'm still working on that should have  been  in
-  this  version  of  the script, they will definately be in the  next  one.
-  These things include; nickname settings, seen script. Encourage me on IRC
-  and  tell  me to get my ass working overtime, I want to get this done,  I
-  just havent got the time at the moment, sorry.
+- If you run this TCL on any other network than AustNet you may have
+  problems with the Channel/Nickname/Memo Services options, as AustNet's
+  are unique, and very different from other networks such as NewNet, EFnet
+  Undernet, DALnet etc. So take care when using other networks, as the
+  script may not function how you want it to.
 
-- All of the Services settings (for Channel service, Nickname service, Memo
-  service  etc.) was made for AustNet Services which arent the same as  all
-  services..  they are actually quite unique. So what I'm saying is if  you
-  arent  on  AustNet most/all of these probably wont work, give them all  a
-  try though.
+- If you are planning to put this TCL on a website of your own, please keep
+  the archive as-is. It's got everything the client will need to set up the
+  eggdrop to work, if you remove anything you are just wasting peoples time.
 
-- Before  ripping the shit out of this script consult me, it's a bitch when
-  you  see  all of your scripts being used in other scripts and the  people
-  are  calling  them  their own, and/or didnt even let you know  about  the
-  script  in  the first place. If I see anyone doing this I will  take  the
-  script  down  from the website and not make it for anyone but myself  and
-  the  channels I run and maintain. It's up to you if you want to see  more
-  versions coming out :)
+- If you find any bugs in the script, or you think anything should be
+  changed (this includes spelling mistakes and things) gimme a yell on
+  AustNet or by Email. It all helps to get the script running it's best.
 
-- If  you find a loophole in what I just said, and it sounds ANYTHING  like
-  what  I just wrote, it means EXACTLY the same thing so do it and the  end
-  result will be the same.
-
-- All  of the scripts and documentation should go together in one  archive,
-  if  they  are  seperated the people trying to load/use  the  script  will
-  probably  get it all wrong, and we dont want anyone stuffing up too  much
-  on an easy-to-use TCL like this do we? :)
-
-- The 'NoteOP' is still in it's trial stages, so if something majorly fucks
-  itself during use, don't use it, and let me know :)
-
-- Yet  again I have failed to complete the 'VoteOP' system, somehow I doubt
-  it  will  get  completed  until one completely boring day,  when  I  have
-  nothing else to do.
-
-- If  you  find  any  bugs in the script or you think  anything  should  be
-  changed  (this  includes  spelling mistakes and things) gimme a  yell  on
-  AustNet or by Email, I would muchly appreciate it.
-
-- When setting directories in the configuration file, use '/' as apposed to
-  '\',  else the bot will not see the slashes, it will think they are  just
-  the character after the slash.
+- TCL/Eggdrop gets confused when you use '\' in files, so use '/' instead
+  to save time/trouble when setting up your files.
 
 --
 
@@ -100,12 +65,12 @@ time  this  will definately get larger and larger, so keep track  with  it.
 
 This bit of information shows all of the channel/query/partyline commands,
 how they are used, what they do, any additional information you may want to
-know, and if they have options (-option) what the option means.
+know, and if they have switches (-switch) what the switch does.
 This is how they all look:
 -
 # <command>: - <syntax>
              - <syntax>
-    * <-option> -> <explination>
+    * <-switch> -> <explination>
   - <what its used for>
   * <additional information>
 -
@@ -131,7 +96,7 @@ the command is prefixed with a '.' then it is to be used in the partyline.
   - The access list of a channel database
   * The access command also shows if a user is suspended or not, with all information associated
 
-# Addme:    - addme <password> <channel>
+# Addme:    - /msg botnick addme <password> <channel>
   - Add yourself to a channel (needed at startup)
   * The password in this is the 'set(adminpass)' you set in the configuration file
 
@@ -186,6 +151,12 @@ the command is prefixed with a '.' then it is to be used in the partyline.
     * All of the 'command's used in here are the actual commands on the bot (most of the ones listed in this section)
   - Changes the channel command level, to disable specific level'd users to do specific commands (eg. set the op command to level 190, instead of 100)
 
+# Del:      - /msg botnick del <all|new|old|n[,n,n,n]>
+    * all -> Deletes all notes currently in your notebox
+    * new -> Deletes all unread notes currently in your notebox
+    * old -> Deletes all read notes currently in your notebox
+  - Deletes messages stored by the note/memo service
+
 # Delme:    - /msg botnick delme [<channel>]
   - Deletes your own access in a channel
 
@@ -213,6 +184,13 @@ the command is prefixed with a '.' then it is to be used in the partyline.
 # Kick:     - /msg botnick kick [<channel>] <nickname> [<message>]
   - Kicks a user the channel, with a message
 
+# List:     - /msg botnick list <new|old|all[null]>
+    * new -> Lists all unread notes currently in your notebox
+    * old -> Lists all read notes currently in your notebox
+    * all -> Lists all notes currently in your notebox
+  - Lists the note/memos received by others using the Send command
+  * If you don't specify an option, it will assume 'all' was chosen
+
 # Listban:  - /msg botnick listban [<channel>] [<wildcard match> <-whoset> <-whenset> <-lastactive> <-reason> <-min N> <-max N>]
             - .listban <channel> [<wildcard match> <-whoset> <-whenset> <-lastactive> <-reason> <-min N> <-max N>]
     * -whoset     -> Displays who set the ban
@@ -234,16 +212,17 @@ the command is prefixed with a '.' then it is to be used in the partyline.
   - Says a silly quote that mimics the nickname
   * This command will mimic anyone who is listed in the set(mimic.file) file
 
-# Note:     - /msg botnick note send <nick/chan[,nick/chan] [-min level] [-max level] <message>
-            - /msg botnick note read <new|all|N[n,n,n]>
-            - /msg botnick note list <new|all[null]|old>
-            - /msg botnick note del <all|new|n[,n,n,n]|old>
-            - /msg botnick note purge
-  - Similar to the Memo Service on most networks, an almost exact replica of the NoteOP on AUSTnet. This allows you to store/read/list/delete notes stored in note files
-
 # Op:       - /msg botnick op [<channel>] [<nick1> <nick2> <nick3> ...]
   - Ops you or another user in the channel
   * If you dont specify anything after 'op' it will op you
+
+# Purge:    - /msg botnick purge
+  - Purge's your note/memo messages to remove them completely from the bot, unretrievable
+
+# Read:     - /msg botnick read <new|all|N[n,n,n]>
+    * new -> Reads all unread notes currently in your notebox
+    * all -> Reads all notes currently in your notebox
+  - Reads note/memos sent to you by others using the Send command
 
 # Resetdb:  - /msg botnick resetdb [<channel>] [<level>]
   - Resets the channel user database, if you specify a level it will only delete below that
@@ -253,6 +232,11 @@ the command is prefixed with a '.' then it is to be used in the partyline.
     * -online -> Sends a list of people who are online in the channel to you without letting others know
   - Sends a message to everyone who is online in the channel saying the 'message'
   * If the 'nonote' is higher then your access in the channel, this wont send any messages to others
+
+# Send:     - /msg botnick send <nick/chan[,nick/chan]> [-min N] [-max N] <message>
+    * -min N -> Sends note to all users in the channel(s) with an access level above/including 'N'
+    * -max N -> Sends note to all users in the channel(s) with an access level below/including 'N'
+  - Sends a note/memo to the nick/chan you selected.
 
 # Set:      - /msg botnick set [<channel>] <keeptopic|mode|nonote|oprestrict|restrict|mustid|tellpeak|tellset|telladd|telldel|nochanmsg|funmsg|url|log|owner|address> <newvalue>
     * keeptopic  -> The topic lock level
@@ -276,6 +260,28 @@ the command is prefixed with a '.' then it is to be used in the partyline.
     * banquota   -> Sets the ban quota on the channel (set to '0' for unlimited)
   - Change the main settings of each individual channel
   * In the next version of Services all of these settings will be working, and more *should* be added
+
+# Setfile:  - .setfile <8ball|mimic|topics|quickban> <add|del|list> [<nickname|acronym> <new setting>]
+    * 8ball    -> Changes option in the $set(8ball.file) file, can only add/list
+    * mimic    -> Changes option in the $set(mimic.file) file
+    * topics   -> Changes option in the $set(topics.file) file, can only add/list
+    * quickban -> Changes optoin in the $set(quickban.file) file
+  - Manages the 8ball, topics, quickban and mimic files by adding, deleting and listing options.
+
+# Setinfo:  - .setinfo <variable> <new setting>
+  - Changes your $set(variable) variables from within the bot
+  * Only bot owner can use this, and do so with extreme care
+
+# Mainchan: - .mainchan <add|del|set|combine> <channel> [<option>]
+    * add     -> Adds a mainchan to the bot and joins the channel
+    * del     -> Removes a mainchan from the bot and parts the channel
+    * set     -> Set <yes/on/1> makes the channel usable. Set <no/off/0> makes the channel unusable
+    * combine -> Changes 'channel' into 'option' and moves access list, 'option' access list over-rules 'channel'
+  - Toggles with the main channels and settings on the bot
+  * Deleting a channel destroys the access list completely
+
+# Homechan: - .homechan <channel>
+  - Sets the homechan to 'channel'
 
 # Setme:    - /msg botnick setme <email|pass|url|asl|usemsg|autoid|aov|aop|showemail|noteonadd|noteondel|noteonset|tellbyemail> <new value>
     * email       -> The email the bot sends emails to for settings lower, and to let others know it
@@ -312,9 +318,7 @@ the command is prefixed with a '.' then it is to be used in the partyline.
 
 --
 
-If there is anything else you want to know about the script, or anything else
-that I know or should know, Email me or message me on IRC (irc.austnet.org)
-my nickname is usually 'Cyborg-' NoteOP me or something if I aint there. The
-channel I'm ALWAYS in is #Testikles` so drop in and cause a riot!
+If there is anything not in this list, or file that should be please tell me about
+it ASAP so I can update. Also if there's any problems, email or drop by the channel.
 
-- damian [2002]
+- damian [2003]

@@ -3,7 +3,7 @@
 ###
 
 ### ADDME:
-bind msg - addme {msg_error msg_addme}
+bind msg - addme "msg_error msg_addme"
 
 ### QUERY:
 proc msg_addme {nick uhost handle text} {

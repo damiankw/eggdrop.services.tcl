@@ -8,8 +8,8 @@
 ###
 
 ### BAN:
-bind msg - ban {msg_error msg_ban}
-bind pub - $set(cmd)ban {pub_error pub_ban}
+bind msg - ban "msg_error msg_ban"
+bind pub - $set(cmd)ban "pub_error pub_ban"
 
 ### CHANNEL:
 proc pub_ban {nick uhost handle chan text} {
@@ -35,7 +35,7 @@ proc msg_ban {nick uhost handle text} {
 proc all_ban {type nick uhost handle chan text} {
   global set botnick
   chan_settings ban $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
@@ -44,7 +44,7 @@ proc all_ban {type nick uhost handle chan text} {
   } elseif {[level $handle $chan] < [comget $chan ban]} {
     notice $nick $handle "Your level of [level $handle $chan] is less then the required [comget $chan ban] for this command"
   } elseif {[lindex $text 0] == ""} {
-    notice $nick $handle "Invalid request: No nick/ban mask"
+    notice $nick $handle "Invalid request: No nickname/banmask"
   } elseif {[string tolower [lindex $text 0]] == [string tolower $botnick]} {
     putkick $chan $nick "Why would you want to ban the channel service $botnick? :)"
     putcmdlog "> !$handle! ($nick!$uhost) BAN\[$type\] ($chan): [lindex $text 0] - auto-kicking"
@@ -52,6 +52,8 @@ proc all_ban {type nick uhost handle chan text} {
     notice $nick $handle "[lindex $text 0] \[[nick2hand [lindex $text 0]]\] is a protected member, and their level of [level [nick2hand [lindex $text 0]] $chan] outranks your level of [level $handle $chan]"
   } elseif {[llength [banlist $chan]] >= [changet $chan banquota] && [changet $chan banquota] > "0"} {
     notice $nick $handle "The $chan banlist is full, you cannot ban anything else here."
+  } elseif {[string tolower [lindex $text 0]] == [string tolower $set(chanop)]} {
+    notice $nick $handle "$set(chanop) (Channel Service) is a protected member, and cannot be banned from this channel."
   } else {
     set nk 0
     set st none
@@ -113,6 +115,8 @@ proc all_ban {type nick uhost handle chan text} {
     } else {
       set rn [string trim $rn]
     }
+    regsub -all \\n $rn "\\n" rn
+    regsub -all \\r $rn "\\r" rn
     if {$ne} {
       set lt 0
     } elseif {$lt == "0"} {
@@ -148,6 +152,7 @@ proc all_ban {type nick uhost handle chan text} {
       return
     }
     newchanban $chan $bm $handle "$lvl $nick!$uhost" $lt $st
+    checkusers
     setuser &banlist& XTRA $chan,$bm $rn
     flushmode $chan
     if {$ka} {

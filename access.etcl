@@ -4,9 +4,9 @@
 ###
 
 ### ACCESS:
-bind msg - access {msg_error msg_access}
-bind pub - $set(cmd)access {pub_error pub_access}
-bind dcc - access {dcc_error dcc_access}
+bind msg - access "msg_error msg_access"
+bind pub - $set(cmd)access "pub_error pub_access"
+bind dcc - access "dcc_error dcc_access"
 
 ### CHANNEL:
 proc pub_access {nick uhost handle chan text} {
@@ -32,7 +32,7 @@ proc msg_access {nick uhost handle text} {
 proc all_access {type nick uhost handle chan text} {
   global set botnick
   chan_settings access $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0"} {
+  if {[level $handle $chan] == "0" || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
@@ -113,7 +113,9 @@ proc all_access {type nick uhost handle chan text} {
       notice $nick $handle "*** $chan Database \[Match(Nick: [lindex $ma 0] Userhost: $ho) Min: [align $mn 3] Max: [align $mx 3]\] ***"
     }
     notice $nick $handle "      NickName          Level  AOP   AOV   Prot"
-    if {[string tolower [lindex $text 0]] == "-check" && [level $ma $chan] > "0"} {
+    if {[string tolower [lindex $text 0]] == "-check" && [string tolower [lindex $text 1]] == [string tolower $set(chanop)]} {
+      notice $nick $handle "$set(chanop) doesn't need no access >:)"
+    } elseif {[string tolower [lindex $text 0]] == "-check" && [level $ma $chan] > "0"} {
       notice $nick $handle "1     [align $ma 17] [align [level $ma $chan] 6] [align [change [aop $ma $chan] yesno] 5] [align [change [aov $ma $chan] yesno] 5] [align [change [protect $ma $chan] yesno] 5]"
       if {[suspend $handle $chan]} {
         notice $nick $handle "Suspend Expires: [ctime [lindex [suspendinfo $chan $handle] 0]] $set(timezone)"

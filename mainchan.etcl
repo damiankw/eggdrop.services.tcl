@@ -3,7 +3,7 @@
 ###
 
 ### MAINCHAN:
-bind dcc - mainchan {dcc_error dcc_mainchan}
+bind dcc - mainchan "dcc_error dcc_mainchan"
 
 ### MAIN:
 proc dcc_mainchan {handle idx text} {
@@ -35,6 +35,8 @@ proc dcc_mainchan {handle idx text} {
     foreach user [access $chan] {
       -user $user $chan
     }
+    putdcc $idx "Deleting channel '$chan' from eggdrop channel database..."
+    channel remove $chan
   } elseif {$type == "set" && $option == ""} {
     putdcc $idx "Invalid request: You haven't specified if you want to activate the channel or not."
   } elseif {$type == "set" && ($option == "1" || $option == "yes" || $option == "on")} {
@@ -64,7 +66,7 @@ proc dcc_mainchan {handle idx text} {
     delmainchan $chan
     homechan "$handle successfully combined $chan with $option (removed $chan from database)"
   } else {
-    putdcc $idx "Invalid request: $type"
+    putdcc $idx "Invalid request: $option"
   }
 }
 

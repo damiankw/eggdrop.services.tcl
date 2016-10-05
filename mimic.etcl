@@ -3,8 +3,8 @@
 ###
 
 ### MIMIC:
-bind msg - mimic {msg_error msg_mimic}
-bind pub - $set(cmd)mimic {pub_error pub_mimic}
+bind msg - mimic "msg_error msg_mimic"
+bind pub - $set(cmd)mimic "pub_error pub_mimic"
 
 ### CHANNEL:
 proc pub_mimic {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_mimic {nick uhost handle text} {
 proc all_mimic {type nick uhost handle chan text} {
   global set botnick
   chan_settings mimic $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {[string tolower $type] != "c"} {
     notice $nick $handle "Command 'mimic' must be used as a channel command."
@@ -42,6 +42,8 @@ proc all_mimic {type nick uhost handle chan text} {
     notice $nick $handle "Fun messages are currently turned off in $chan"
   } elseif {[lindex $text 0] == ""} {
     notice $nick $handle "Invalid request: Who do you want me to mimic? :)"
+  } elseif {[lindex $text 0] == "list"} {
+    notice $nick $handle "Mimic List: [listfile $set(data.dir)/$set(mimic.file)]"
   } elseif {[string tolower [lindex $text 0]] == "ah_king"} {
     msg $chan "damian... what are you doing?"
   } elseif {[readfile $set(data.dir)/$set(mimic.file) [lindex $text 0]] == ""} {

@@ -3,8 +3,8 @@
 ###
 
 ### 8BALL:
-bind msg - 8ball {msg_error msg_8ball}
-bind pub - $set(cmd)8ball {pub_error pub_8ball}
+bind msg - 8ball "msg_error msg_8ball"
+bind pub - $set(cmd)8ball "pub_error pub_8ball"
 
 ### CHANNEL:
 proc pub_8ball {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_8ball {nick uhost handle text} {
 proc all_8ball {type nick uhost handle chan text} {
   global set botnick
   chan_settings 8ball $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {[string tolower $type] != "c"} {
     notice $nick $handle "Command '8ball' must be used as a channel command."

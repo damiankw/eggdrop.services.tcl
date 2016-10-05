@@ -3,8 +3,8 @@
 ###
 
 ### SEEK:
-bind msg - seek {msg_error msg_seek}
-bind pub - $set(cmd)seek {pub_error pub_seek}
+bind msg - seek "msg_error msg_seek"
+bind pub - $set(cmd)seek "pub_error pub_seek"
 
 ### CHANNEL:
 proc pub_seek {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_seek {nick uhost handle text} {
 proc all_seek {type nick uhost handle chan text} {
   global set botnick
   chan_settings seek $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"

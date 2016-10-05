@@ -47,7 +47,7 @@ proc logsend_server {idx text} {
     putdcc $idx "To: <[nickinfo [lindex [changet $sendmail($idx.chan) owner] 0] email]>"
     putdcc $idx "Subject: \[$botnick LOG\] [lindex [ctime [unixtime]] 2]/[lindex [ctime [unixtime]] 1]/[lindex [ctime [unixtime]] 4] -- $sendmail($idx.chan)"
     putdcc $idx "Date: [ctime [unixtime]] $set(timezone)"
-    putdcc $idx "X-Mailer: Services TCL Mail System v0.2 (Cyborg- 2001)"
+    putdcc $idx "X-Mailer: Services TCL Mail System v0.2 (damian 2001)"
     putdcc $idx "Log Entries"
     putdcc $idx "-----------"
     putdcc $idx ""

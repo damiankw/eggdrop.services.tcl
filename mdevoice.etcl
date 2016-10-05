@@ -3,8 +3,8 @@
 ###
 
 ### MDEVOICE:
-bind msg - mdevoice {msg_error msg_mdevoice}
-bind pub - $set(cmd)mdevoice {pub_error pub_mdevoice}
+bind msg - mdevoice "msg_error msg_mdevoice"
+bind pub - $set(cmd)mdevoice "pub_error pub_mdevoice"
 
 ### CHANNEL:
 proc pub_mdevoice {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_mdevoice {nick uhost handle text} {
 proc all_mdevoice {type nick uhost handle chan text} {
   global set botnick
   chan_settings mdevoice $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"

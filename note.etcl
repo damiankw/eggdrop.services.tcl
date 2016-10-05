@@ -1,18 +1,22 @@
 ###
-# Usage: /msg botnick note send <nick/chan[,nick/chan] [-min level] [-max level] <message>
+# Usage: /msg botnick send <nick/chan[,nick/chan]> [-min level] [-max level] <message>
 ###
-# Usage: /msg botnick note read <new|all|N[n,n,n]>
+# Usage: /msg botnick read <new|all|N[n,n,n]>
 ###
-# Usage: /msg botnick note list <new|all[null]|old>
+# Usage: /msg botnick list <new|all[null]|old>
 ###
-# Usage: /msg botnick note del <all|new|n[,n,n,n]|old>
+# Usage: /msg botnick del <all|new|n[,n,n,n]|old>
 ###
-# Usage: /msg botnick note purge
+# Usage: /msg botnick purge
 ###
 
-bind msg - note {msg_error msg_note}
+bind msg - send "msg_error msg_send"
+bind msg - read "msg_error msg_read"
+bind msg - list "msg_error msg_list"
+bind msg - del "msg_error msg_del"
+bind msg - purge "msg_error msg_purge"
 
-proc msg_note {nick uhost handle text} {
+proc msg_list {nick uhost handle text} {
   global set
   if {![validuser $handle]} {
     return
@@ -20,26 +24,7 @@ proc msg_note {nick uhost handle text} {
     notice $nick $handle "You are not yet authenticated."
   } elseif {[nickinfo $handle userhost] != $uhost} {
     notice $nick $handle "Your current userhost of '$uhost' is not the one you authenticated with."
-  } elseif {[lindex $text 0] == ""} {
-    notice $nick $handle "Invalid request: What do you want to do with your notes?"
-  } elseif {[string tolower [lindex $text 0]] == "list"} {
-    note_list $nick $uhost $handle [lrange $text 1 end]
-  } elseif {[string tolower [lindex $text 0]] == "read"} {
-    note_read $nick $uhost $handle [lrange $text 1 end]
-  } elseif {[string tolower [lindex $text 0]] == "send"} {
-    note_send $nick $uhost $handle [lrange $text 1 end]
-  } elseif {[string tolower [lindex $text 0]] == "del"} {
-    note_del $nick $uhost $handle [lrange $text 1 end]
-  } elseif {[string tolower [lindex $text 0]] == "purge"} {
-    note_purge $nick $uhost $handle [lrange $text 1 end]
-  } else {
-    notice $nick $handle "Invalid request: [lindex $text 0]"
-  }
-}
-
-proc note_list {nick uhost handle text} {
-  global set
-  if {[string tolower [lindex $text 0]] == "new"} {
+  } elseif {[string tolower [lindex $text 0]] == "new"} {
     notice $nick $handle "*** Notebox contents at [ctime [unixtime]] $set(timezone) ***"
     notice $nick $handle "To read: read <number>\[,<number>\] To delete: del <number>\[,<number>\]"
     set cnt 0
@@ -108,19 +93,25 @@ proc note_list {nick uhost handle text} {
   }
 }
 
-proc note_read {nick uhost handle text} {
+proc msg_read {nick uhost handle text} {
   global set
-  if {[lindex $text 0] == ""} {
+  if {![validuser $handle]} {
+    return
+  } elseif {![nickinfo $handle auth]} {
+    notice $nick $handle "You are not yet authenticated."
+  } elseif {[nickinfo $handle userhost] != $uhost} {
+    notice $nick $handle "Your current userhost of '$uhost' is not the one you authenticated with."
+  } elseif {[lindex $text 0] == ""} {
     notice $nick $handle "Invalid request: What note numbers?"
   } elseif {[string tolower [lindex $text 0]] == "new"} {
     set cnt 0
     foreach note [notelist $handle] {
       if {[lindex $note 2] == "U"} {
-        notice $nick $handle "Note [lindex $note 0] from [lindex $note 4] -- Sent [ctime [lindex $note 1]] $set(timezone)"
+        notice $nick $handle "Note [lindex $note 0] from [lindex $note 4] -- Sent [ctime [lindex $note 1]] $set(timezone)"
         if {[lindex $note 3] == ""} {
           notice $nick $handle [lindex $note 5]
         } else {
-          notice $nick $handle "[lindex $note 4] -> [lindex [lindex $note 3] 0] \[min: [align [lindex [lindex $note 3] 1] 3] max: [align [lindex [lindex $note 3] 2] 3]\]: [lindex $note 5]"
+          notice $nick $handle "[lindex $note 4] -> [lindex [lindex $note 3] 0] \[min: [align [lindex [lindex $note 3] 1] 3] max: [align [lindex [lindex $note 3] 2] 3]\]: [lindex $note 5]"
         }
         writefile $set(data.dir)/note.[file_change $handle] [lindex $note 6] "[lindex $note 1] R \{[lindex $note 3]\} [lindex $note 4] \{[lindex $note 5]\}"
         set cnt 1
@@ -133,11 +124,11 @@ proc note_read {nick uhost handle text} {
     set cnt 0
     foreach note [notelist $handle] {
       if {[lindex $note 2] == "R" || [lindex $note 2] == "D"} {
-        notice $nick $handle "Note [lindex $note 0] from [lindex $note 4] -- Sent [ctime [lindex $note 1]] $set(timezone)"
+        notice $nick $handle "Note [lindex $note 0] from [lindex $note 4] -- Sent [ctime [lindex $note 1]] $set(timezone)"
         if {[lindex $note 3] == ""} {
           notice $nick $handle [lindex $note 5]
         } else {
-          notice $nick $handle "[lindex $note 4] -> [lindex [lindex $note 3] 0] \[min: [align [lindex [lindex $note 3] 1] 3] max: [align [lindex [lindex $note 3] 2] 3]\]: [lindex $note 5]"
+          notice $nick $handle "[lindex $note 4] -> [lindex [lindex $note 3] 0] \[min: [align [lindex [lindex $note 3] 1] 3] max: [align [lindex [lindex $note 3] 2] 3]\]: [lindex $note 5]"
         }
         if {[lindex $note 2] == "D"} {
           writefile $set(data.dir)/note.[file_change $handle] [lindex $note 6] "[lindex $note 1] R \{[lindex $note 3]\} [lindex $note 4] \{[lindex $note 5]\}"
@@ -151,11 +142,11 @@ proc note_read {nick uhost handle text} {
   } elseif {[string tolower [lindex $text 0]] == "all"} {
     set cnt 0
     foreach note [notelist $handle] {
-      notice $nick $handle "Note [lindex $note 0] from [lindex $note 4] -- Sent [ctime [lindex $note 1]] $set(timezone)"
+      notice $nick $handle "Note [lindex $note 0] from [lindex $note 4] -- Sent [ctime [lindex $note 1]] $set(timezone)"
       if {[lindex $note 3] == ""} {
         notice $nick $handle [lindex $note 5]
       } else {
-        notice $nick $handle "[lindex $note 4] -> [lindex [lindex $note 3] 0] \[min: [align [lindex [lindex $note 3] 1] 3] max: [align [lindex [lindex $note 3] 2] 3]\]: [lindex $note 5]"
+        notice $nick $handle "[lindex $note 4] -> [lindex [lindex $note 3] 0] \[min: [align [lindex [lindex $note 3] 1] 3] max: [align [lindex [lindex $note 3] 2] 3]\]: [lindex $note 5]"
       }
       if {[lindex $note 2] == "D" || [lindex $note 2] == "U"} {
         writefile $set(data.dir)/note.[file_change $handle] [lindex $note 6] "[lindex $note 1] R \{[lindex $note 3]\} [lindex $note 4] \{[lindex $note 5]\}"
@@ -165,28 +156,36 @@ proc note_read {nick uhost handle text} {
     if {!$cnt} {
       notice $nick $handle "You have no notes in your notebox"
     }
-  } else {
+  } elseif {[isnum [replace [lindex $text 0] , ""]] && ![string match *.* [lindex $text 0]]} {
     foreach note [replace [lindex $text 0] , " "] {
       set tmp [listfile $set(data.dir)/note.[file_change $handle] $note]
       set note "$note [readfile $set(data.dir)/note.[file_change $handle] $tmp] $tmp"
       if {[llength $note] > "1"} {
-        notice $nick $handle "Note [lindex $note 0] from [lindex $note 4] -- Sent [ctime [lindex $note 1]] $set(timezone)"
+        notice $nick $handle "Note [lindex $note 0] from [lindex $note 4] -- Sent [ctime [lindex $note 1]] $set(timezone)"
         if {[lindex $note 3] == ""} {
           notice $nick $handle [lindex $note 5]
         } else {
-          notice $nick $handle "[lindex $note 4] -> [lindex [lindex $note 3] 0] \[min: [align [lindex [lindex $note 3] 1] 3] max: [align [lindex [lindex $note 3] 2] 3]\]: [lindex $note 5]"
+          notice $nick $handle "[lindex $note 4] -> [lindex [lindex $note 3] 0] \[min: [align [lindex [lindex $note 3] 1] 3] max: [align [lindex [lindex $note 3] 2] 3]\]: [lindex $note 5]"
         }
         if {[lindex $note 2] == "D" || [lindex $note 2] == "U"} {
           writefile $set(data.dir)/note.[file_change $handle] [lindex $note 6] "[lindex $note 1] R \{[lindex $note 3]\} [lindex $note 4] \{[lindex $note 5]\}"
         }
       }
     }
+  } else {
+    notice $nick $handle "[lindex $text 0] is an invalid note"
   }
 }
 
-proc note_del {nick uhost handle text} {
+proc msg_del {nick uhost handle text} {
   global set
-  if {[lindex $text 0] == ""} {
+  if {![validuser $handle]} {
+    return
+  } elseif {![nickinfo $handle auth]} {
+    notice $nick $handle "You are not yet authenticated."
+  } elseif {[nickinfo $handle userhost] != $uhost} {
+    notice $nick $handle "Your current userhost of '$uhost' is not the one you authenticated with."
+  } elseif {[lindex $text 0] == ""} {
     notice $nick $handle "Invalid request: Which notes?"
   } elseif {[string tolower [lindex $text 0]] == "all"} {
     set cnt 0
@@ -245,9 +244,15 @@ proc note_del {nick uhost handle text} {
   }
 }
 
-proc note_send {nick uhost handle text} {
+proc msg_send {nick uhost handle text} {
   global set botnick
-  if {[lindex $text 0] == ""} {
+  if {![validuser $handle]} {
+    return
+  } elseif {![nickinfo $handle auth]} {
+    notice $nick $handle "You are not yet authenticated."
+  } elseif {[nickinfo $handle userhost] != $uhost} {
+    notice $nick $handle "Your current userhost of '$uhost' is not the one you authenticated with."
+  } elseif {[lindex $text 0] == ""} {
     notice $nick $handle "Invalid request: Send to who?"
   } elseif {[lindex $text 1] == ""} {
     notice $nick $handle "Invalid request: Wheres the note?"
@@ -301,10 +306,10 @@ proc note_send {nick uhost handle text} {
           }
         }
         if {$nnicks != ""} {
-          notice $nnicks "" "You just received a channel note from $nick \[$handle\]. /msg $botnick note read new"
+          notice $nnicks "" "You just received a channel note from $nick \[$handle\]. /msg $botnick read new"
         }
         if {$mnicks != ""} {
-          msg $mnicks "You just received a channel note from $nick \[$handle\]. /msg $botnick note read new"
+          msg $mnicks "You just received a channel note from $nick \[$handle\]. /msg $botnick read new"
         }
         notice $nick $handle "$tnicks people on $target received your note"
       } elseif {![validuser $target]} {
@@ -312,24 +317,32 @@ proc note_send {nick uhost handle text} {
       } elseif {[validuser $target]} {
         writefile $set(data.dir)/note.[file_change $target] [unixtime]$handle[rand 9] "[unixtime] U {} $handle {$note}"
         if {[notify $target]} {
-          notice $target $target "You just received a note from $nick \[$handle\]. /msg $botnick note read [llength [notelist $target]]"
+          notice $target $target "You just received a note from $nick \[$handle\]. /msg $botnick read [llength [notelist $target]]"
           notice $nick $handle "$target is online, and note has been delivered"
         } else {
           notice $nick $handle "Your note has been stored in $target's notebox"
         }
       } else {
-        script_error note_send "else at end of statement is wrong."
+        script_error msg_send "else at end of statement is wrong."
       }
     }
   }
 }
 
-proc note_purge {nick uhost handle text} {
+proc msg_purge {nick uhost handle text} {
   global set
-  foreach note [notelist $handle] {
-    if {[lindex $note 2] == "D"} {
-      remfile $set(data.dir)/note.[file_change $handle] [lindex $note 6]
+  if {![validuser $handle]} {
+    return
+  } elseif {![nickinfo $handle auth]} {
+    notice $nick $handle "You are not yet authenticated."
+  } elseif {[nickinfo $handle userhost] != $uhost} {
+    notice $nick $handle "Your current userhost of '$uhost' is not the one you authenticated with."
+  } else {
+    foreach note [notelist $handle] {
+      if {[lindex $note 2] == "D"} {
+        remfile $set(data.dir)/note.[file_change $handle] [lindex $note 6]
+      }
     }
+    notice $nick $handle "Purged notes marked as 'D'eleted"
   }
-  notice $nick $handle "Purged notes marked as 'D'eleted"
 }

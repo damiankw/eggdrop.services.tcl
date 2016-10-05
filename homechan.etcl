@@ -3,7 +3,7 @@
 ###
 
 ### HOMECHAN:
-bind dcc - homechan {dcc_error dcc_homechan}
+bind dcc - homechan "dcc_error dcc_homechan"
 
 ### MAIN:
 proc dcc_homechan {handle idx text} {
@@ -13,7 +13,7 @@ proc dcc_homechan {handle idx text} {
     putdcc $idx "Invalid request: Where's the channel name?"
   } elseif {[string tolower $chan] == [string tolower $set(homechan)]} {
     putdcc $idx "$chan is already the home channel"
-  } elseif {[string match #* $chan]} {
+  } elseif {![string match #* $chan]} {
     putdcc $idx "$chan is not a channel."
   } else {
     putcmdlog "> #$handle# homechan $chan"

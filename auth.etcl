@@ -4,19 +4,21 @@
 ###
 
 ### AUTH System
-bind msg - auth {msg_error msg_auth}
-bind msg - id {msg_error msg_auth}
-bind msg - identify {msg_error msg_auth}
-bind msg - deauth {msg_error msg_deauth}
-bind msg - unid {msg_error msg_deauth}
-bind msg - unidentify {msg_error msg_deauth}
+bind msg - auth "msg_error msg_auth"
+bind msg - id "msg_error msg_auth"
+bind msg - identify "msg_error msg_auth"
+bind msg - deauth "msg_error msg_deauth"
+bind msg - unid "msg_error msg_deauth"
+bind msg - unidentify "msg_error msg_deauth"
 
 ### DEAUTH:
 proc msg_deauth {nick uhost handle text} {
   global set
   chan_settings deauth - $nick $uhost $handle "" ""
-  if {$handle == "*" || ![getuser $handle xtra auth]} {
+  if {$handle == "*" || ![nickinfo $handle auth]} {
     return
+  } elseif {[backup_check]} {
+    notice $nick $handle "You must use one of the other main bots to deauthenticate."
   } elseif {[lindex $text 0] == ""} {
     notice $nick $handle "You did not specify a password."
   } elseif {![nickinfo $handle auth]} {
@@ -28,7 +30,7 @@ proc msg_deauth {nick uhost handle text} {
     setuser $handle XTRA AUTH 0
     homechan "($nick!$uhost): successfully deauthenticated"
     if {[llength [notelist $handle new]] > "0"} {
-      notice $nick $handle "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read), Type: /msg $botnick note list or /msg $botnick note list new"
+      notice $nick $handle "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read), Type: /msg $botnick list or /msg $botnick list new"
     }
     deauth_automode $nick $handle
   }
@@ -40,6 +42,8 @@ proc msg_auth {nick uhost handle text} {
   chan_settings auth - $nick $uhost $handle "" ""
   if {$set(sockcommand)} {
     notice $nick $handle "Incorrect procedure: You must authenticate via socket authentication."
+  } elseif {[backup_check]} {
+    notice $nick $handle "You must use one of the other main bots to authenticate."
   } elseif {$handle == "*"} {
     if {![validuser $nick]} {
       notice $nick $handle "You do not have access to this command."
@@ -78,7 +82,7 @@ proc msg_auth {nick uhost handle text} {
     homechan "\[$handle\]($nick!$uhost): successfully authenticated"
     putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[passed\]"
     setuser $handle XTRA USERHOST $uhost
-      setuser $nick XTRA REALHOST
+    setuser $handle XTRA REALHOST
     setuser $handle XTRA AUTH 1
     setuser $handle XTRA LASTID [unixtime]
     auth_automode $nick $handle $uhost

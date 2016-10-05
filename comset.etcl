@@ -3,8 +3,8 @@
 ###
 
 ### COMSET:
-bind msg - comset {msg_error msg_comset}
-bind pub - $set(cmd)comset {pub_error pub_comset}
+bind msg - comset "msg_error msg_comset"
+bind pub - $set(cmd)comset "pub_error pub_comset"
 
 ### CHANNEL:
 proc pub_comset {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_comset {nick uhost handle text} {
 proc all_comset {type nick uhost handle chan text} {
   global set botnick
   chan_settings comget $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"

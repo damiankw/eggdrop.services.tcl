@@ -3,8 +3,8 @@
 ###
 
 ### DELME:
-bind msg - delme {msg_error msg_delme}
-bind pub - $set(cmd)delme {pub_error pub_delme}
+bind msg - delme "msg_error msg_delme"
+bind pub - $set(cmd)delme "pub_error pub_delme"
 
 ### CHANNEL:
 proc pub_delme {nick uhost handle chan text} {

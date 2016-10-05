@@ -3,8 +3,8 @@
 ###
 
 ### UNBAN:
-bind msg - unban {msg_error msg_unban}
-bind pub - $set(cmd)unban {pub_error pub_unban}
+bind msg - unban "msg_error msg_unban"
+bind pub - $set(cmd)unban "pub_error pub_unban"
 
 ### CHANNEL:
 proc pub_unban {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_unban {nick uhost handle text} {
 proc all_unban {type nick uhost handle chan text} {
   global set botnick
   chan_settings unban $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
@@ -51,6 +51,7 @@ proc all_unban {type nick uhost handle chan text} {
       set rn [lindex $ban 1]
       if {[lindex $rn 0] <= [level $handle $chan] && [lindex $ban 2] != "0"} {
         killchanban $chan [lindex $ban 0]
+        checkusers
         setuser &banlist& XTRA $chan,[lindex $ban 0]
         incr b 1
       } elseif {[ischanban [lindex $ban 0] $chan]} {
@@ -69,6 +70,7 @@ proc all_unban {type nick uhost handle chan text} {
       set rn [lindex $ban 1]
       if {[lindex $rn 0] <= [level $handle $chan] && [lindex $ban 2] == "0"} {
         killchanban $chan [lindex $ban 0]
+        checkusers
         setuser &banlist& XTRA $chan,[lindex $ban 0]
         incr b 1
       } elseif {[ischanban [lindex $ban 0] $chan]} {
@@ -87,6 +89,7 @@ proc all_unban {type nick uhost handle chan text} {
       set rn [lindex $ban 1]
       if {[lindex $rn 0] <= [level $handle $chan] && [isbansticky [lindex $ban 0] $chan]} {
         killchanban $chan [lindex $ban 0]
+        checkusers
         setuser &banlist& XTRA $chan,[lindex $ban 0]
         incr b 1
       } elseif {[ischanban [lindex $ban 0] $chan]} {
@@ -100,6 +103,7 @@ proc all_unban {type nick uhost handle chan text} {
       set rn [lindex $ban 1]
       if {[lindex $rn 0] <= [level $handle $chan] && [string match [string tolower [lindex $ban 0]] [string tolower $nick!$uhost]]} {
         killchanban $chan [lindex $ban 0]
+        checkusers
         setuser &banlist& XTRA $chan,[lindex $ban 0]
         incr b 1
       } elseif {[ischanban [lindex $ban 0] $chan] && [string match [string tolower [lindex $ban 0]] [string tolower $nick!$uhost]]} {
@@ -113,6 +117,7 @@ proc all_unban {type nick uhost handle chan text} {
       set rn [lindex $ban 1]
       if {[lindex $rn 0] <= [level $handle $chan] && [string tolower [lindex $ban 0]] == [string tolower [getstring [lindex $text 0]]]} {
         killchanban $chan [lindex $ban 0]
+        checkusers
         setuser &banlist& XTRA $chan,[lindex $ban 0]
         notice $nick $handle "Ban [lindex $ban 0] removed on $chan"
       }

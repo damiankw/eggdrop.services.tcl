@@ -3,8 +3,8 @@
 ###
 
 ### SET:
-bind msg - set {msg_error msg_set}
-bind pub - $set(cmd)set {pub_error pub_set}
+bind msg - set "msg_error msg_set"
+bind pub - $set(cmd)set "pub_error pub_set"
 
 ### CHANNEL:
 proc pub_set {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_set {nick uhost handle text} {
 proc all_set {type nick uhost handle chan text} {
   global set botnick
   chan_settings set $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
@@ -45,6 +45,8 @@ proc all_set {type nick uhost handle chan text} {
   } else {
     set option [string tolower [lindex $text 0]]
     set value [string tolower [lindex $text 1]]
+    regsub -all \\n $value "\\n" value
+    regsub -all \\r $value "\\r" value
     if {$option == "funmsg"} {
       set optionmsg "Fun Messages"
     } elseif {$option == "log"} {
@@ -96,7 +98,7 @@ proc all_set {type nick uhost handle chan text} {
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
-    } elseif {($option == "quota" || $option == "banquota") && (![isnum $value] || $value < "1")} {
+    } elseif {($option == "quota" || $option == "banquota") && (![isnum $value] || $value < "1") || [string match *.* $value]} {
       notice $nick $handle "Invalid request: $value"
     } elseif {$option == "quota" || $option == "banquota"} {
       chanset $chan $option $value
@@ -104,7 +106,7 @@ proc all_set {type nick uhost handle chan text} {
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
-    } elseif {$option == "owner" || $option == "address"} {
+    } elseif {$option == "owner"} {
       chanset $chan $option $value
       notice $nick $handle "Setting for '$optionmsg' now set to $value for $chan"
       if {[changet $chan tellset]} {
@@ -120,7 +122,7 @@ proc all_set {type nick uhost handle chan text} {
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
-    } elseif {$option == "access" && ![isnum [lindex $text 2]]} {
+    } elseif {$option == "access" && (![isnum [lindex $text 2]] || [string match *.* $value])} {
       notice $nick $handle "Invalid request: $value"
     } elseif {$option == "access"} {
       chanset $chan accessall "$value [lindex $text 2]"
@@ -128,7 +130,7 @@ proc all_set {type nick uhost handle chan text} {
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
-    } elseif {$option == "hash" && ![isnum $value]} {
+    } elseif {$option == "hash" && (![isnum $value] || [string match *.* $value])} {
       notice $nick $handle "Invalid request: $value"
     } elseif {$option == "hash"} {
       chanset $chan hash $value
@@ -156,10 +158,10 @@ proc all_set {type nick uhost handle chan text} {
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
-    } elseif {$option == "mode" && (![isnum $value] || $value < "0")} {
+    } elseif {$option == "mode" && (![isnum $value] || $value < "0" || [string match *.* $value])} {
       notice $nick $handle "Invalid request: $value"
     } elseif {$option == "mode" && [level $handle $chan] < [lindex [changet $chan modelock] 0]} {
-      notice $nick $handle "The current level of [changet $chan modelock] for $optionmsg exceeds your level of [level $handle $chan]"
+      notice $nick $handle "The current level of [lindex [changet $chan modelock] 0] for $optionmsg exceeds your level of [level $handle $chan]"
     } elseif {$option == "mode" && [level $handle $chan] < $value} {
       notice $nick $handle "Invalid request: Can't set a level higher than your own"
     } elseif {$option == "mode" && [lindex $text 2] == ""} {
@@ -170,6 +172,9 @@ proc all_set {type nick uhost handle chan text} {
         if {$mode == "+"} {
           continue
         } elseif {[ismode $mode two]} {
+          if {$mode == "k"} {
+            channel set $chan need-key ""
+          }
           pushmode $chan -$mode [lindex [getchanmode $chan] $cnt]
           incr cnt 1
         } else {
@@ -191,6 +196,9 @@ proc all_set {type nick uhost handle chan text} {
           continue
         } elseif {$m == "+"} {
           if {[ismode $mode two]} {
+            if {$mode == "k"} {
+              channel set $chan need-key "putserv \"JOIN $chan [lindex $text $cnt]\""
+            }
             if {[lindex $text $cnt] != ""} {
               pushmode $chan +$mode [lindex $text $cnt]
               set mp $mp$mode
@@ -206,7 +214,7 @@ proc all_set {type nick uhost handle chan text} {
         }
       }
       chanset $chan modelock "$value +$mp-$mn $mo"
-      notice $nick $handle "Setting for '$optionmsg' now set to [lrange [changet $chan modelock] 1 end] for $chan"
+      notice $nick $handle "Setting for '$optionmsg' now set to [lrange [changet $chan modelock] 1 end] to level $value for $chan"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to [lrange [changet $chan modelock] 1 end]"
       }

@@ -57,7 +57,7 @@ proc socket_command {idx text} {
       if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
         if {[llength [notelist $handle new]] > "0"} {
           putdcc $idx "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read)"
-          putdcc $idx "Type: /msg $botnick note list or /msg $botnick note list new"
+          putdcc $idx "Type: /msg $botnick list or /msg $botnick list new"
         }
         homechan "\[$handle\]($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])): successfully authenticated as '$handle' and userhosts updated"
         putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) AUTH\[s\] \[passed/userhosts updated\]"
@@ -67,9 +67,6 @@ proc socket_command {idx text} {
         setuser $handle XTRA AUTH 1
         auth_automode $nick $handle [getchanhost $nick]
       }
-    } else {
-      putcmdlog "> error ;sockauth\[\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
-      notice $nick $handle "error ;sockauth\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
     }
   } elseif {[passwdok $handle $pass]} {
     putdcc $idx "Password Accepted -- You have been authenticated as $handle"
@@ -77,7 +74,7 @@ proc socket_command {idx text} {
     if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
       if {[llength [notelist $handle new]] > "0"} {
         putdcc $idx "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read)"
-        putdcc $idx "Type: /msg $botnick note list or /msg $botnick note list new"
+        putdcc $idx "Type: /msg $botnick list or /msg $botnick list new"
       }
       homechan "\[$handle\]($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])): successfully authenticated"
       putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) AUTH\[s\] \[passed\]"
@@ -86,9 +83,6 @@ proc socket_command {idx text} {
       setuser $handle XTRA AUTH 1
       auth_automode $nick $handle [getchanhost $nick]
     }
-  } else {
-    putcmdlog "> error ;sockauth\[2\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
-    notice $nick $handle "error ;sockauth\[2\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
   }
   if {$command != "" && !$return} {
     killdcc $idx

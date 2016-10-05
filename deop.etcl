@@ -3,8 +3,8 @@
 ###
 
 ### DEOP:
-bind msg - deop {msg_error msg_deop}
-bind pub - $set(cmd)deop {pub_error pub_deop}
+bind msg - deop "msg_error msg_deop"
+bind pub - $set(cmd)deop "pub_error pub_deop"
 
 ### CHANNEL:
 proc pub_deop {nick uhost handle chan text} {
@@ -30,7 +30,7 @@ proc msg_deop {nick uhost handle text} {
 proc all_deop {type nick uhost handle chan text} {
   global set botnick
   chan_settings deop $type $nick $uhost $handle $chan $text
-  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan] || [backup_check $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
@@ -48,6 +48,8 @@ proc all_deop {type nick uhost handle chan text} {
         continue
       } elseif {[string tolower $u] == [string tolower $botnick]} {
         notice $nick $handle "I'm not going to deop myself."
+      } elseif {[string tolower $u] == [string tolower $set(chanop)]} {
+        notice $nick $handle "I cannot deop $set(chanop), so I am not going to try."
       } elseif {[string tolower $u] == [string tolower $nick]} {
         pushmode $chan -o $u
       } elseif {[nick2hand $u] == ""} {

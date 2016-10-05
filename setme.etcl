@@ -3,7 +3,7 @@
 ###
 
 ### SET:
-bind msg - setme {msg_error msg_setme}
+bind msg - setme "msg_error msg_setme"
 
 ### QUERY:
 proc msg_setme {nick uhost handle text} {
