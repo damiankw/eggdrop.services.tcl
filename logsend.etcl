@@ -1,0 +1,78 @@
+# This script will send logfiles for the specified channel using 'logsend <channel>'
+# without changing it, this is useless for anything else.. and if you dont know much
+# about eggdrop TCL you will probably stuff it up. For a script that sends files to
+# emails visit the script website (http://www.testikles.org)
+
+proc logsend {chan} {
+  global sendmail set
+  if {[catch {connect $set(mail.serv) 25} idx]} {
+    putlog "> Error opening pop3 host to send $chan logfile"
+    homechan "Could not establish a connection to '$set(mail.serv)' (pop3 mail server)"
+  } elseif {[nickinfo [lindex [changet $chan owner] 0] email] == "0"} {
+    putlog "> Could not send logfile for $chan... owner setting shows no email."
+  } else {
+    control $idx logsend_server
+    set sendmail($idx.chan) $chan
+    set sendmail($idx.temp) 1
+    putlog "> Established a connection to send the $chan logfile"
+  }
+}
+
+proc logsend_server {idx text} {
+  global sendmail set botnick
+  if {[lindex $text 0] == "501"} {
+    putlog "> error sending $sendmail($idx.chan) logfile. Aborting send!"
+    unset sendmail($idx.chan)
+    unset sendmail($idx.temp)
+    killdcc $idx
+  } elseif {[lindex $text 0] == "551"} {
+    putlog "There was a transaction failure while sending from $set(addr) while sending $sendmail($idx.chan) logfile."
+  } elseif {[lindex $text 0] == "220" && $sendmail($idx.temp) == "1"} {
+    incr sendmail($idx.temp) 1
+    putdcc $idx "HELO sendmail"
+  } elseif {[lindex $text 0] == "250" && $sendmail($idx.temp) == "2"} {
+    incr sendmail($idx.temp) 1
+    putdcc $idx "MAIL FROM: <$set(mail.addr)>"
+  } elseif {[lindex $text 0] == "250" && $sendmail($idx.temp) == "3"} {
+    incr sendmail($idx.temp) 1
+    putdcc $idx "RCPT TO: <[nickinfo [lindex [changet $sendmail($idx.chan) owner] 0] email]>"
+  } elseif {[lindex $text 0] == "250" && $sendmail($idx.temp) == "4"} {
+    incr sendmail($idx.temp) 1
+    putdcc $idx "DATA"
+  } elseif {[lindex $text 0] == "250" && $sendmail($idx.temp) == "5"} {
+    putlog "> Sent $sendmail($idx.chan) logfile to [nickinfo [lindex [changet $sendmail($idx.chan) owner] 0] email].. quitting..."
+    putdcc $idx "QUIT"
+  } elseif {[lindex $text 0] == "354"} {
+    putdcc $idx "From: \"$set(mail.name)\" <$set(mail.addr)>"
+    putdcc $idx "To: <[nickinfo [lindex [changet $sendmail($idx.chan) owner] 0] email]>"
+    putdcc $idx "Subject: \[$botnick LOG\] [lindex [ctime [unixtime]] 2]/[lindex [ctime [unixtime]] 1]/[lindex [ctime [unixtime]] 4] -- $sendmail($idx.chan)"
+    putdcc $idx "Date: [ctime [unixtime]] $set(timezone)"
+    putdcc $idx "X-Mailer: Services TCL Mail System v0.2 (Cyborg- 2001)"
+    putdcc $idx "Log Entries"
+    putdcc $idx "-----------"
+    putdcc $idx ""
+    if {![file isfile $set(data.dir)/[file_change $sendmail($idx.chan)].logfile]} {
+      putdcc $idx "No log entries for $sendmail($idx.chan)"
+    } else {
+      set rfile [open $set(data.dir)/[file_change $sendmail($idx.chan)].logfile RDONLY]
+      while {![eof $rfile]} {
+        set line [gets $rfile]
+        putdcc $idx $line
+      }
+      close $rfile
+    }
+    putdcc $idx ""
+    putdcc $idx ""
+    putdcc $idx "----"
+    putdcc $idx "To stop recieving these, simply type when next online: /msg $botnick SET $sendmail($idx.chan) LOG OFF"
+    putdcc $idx "."
+  } elseif {[lindex $text 0] == "221"} {
+    unset sendmail($idx.chan)
+    unset sendmail($idx.temp)
+  } elseif {$text == ""} {
+    if {[info exists sendmail($idx.idx)]} {
+      unset sendmail($idx.chan)
+      unset sendmail($idx.temp)
+    }
+  }
+}

@@ -9,9 +9,9 @@ bind notc - * {notc_error notc_notes}
 proc notc_nickopauth {nick uhost handle text} {
   global set
   if {$set(password) == ""} {
-    putlog "> Attempted to authenticate to $set(NickOPi) but no password set..."
-  } elseif {[string tolower $set(NickOP)] == [string tolower $nick]} {
-    puthelp "PRIVMSG $set(NickOPi) :identify $set(password)"
+    putlog "> Attempted to authenticate to $set(nickop) but no password set..."
+  } elseif {[string tolower $set(nickop)] == [string tolower $nick]} {
+    putquick "PRIVMSG $set(nickopi) :identify $set(password)"
     putlog "> $nick ($uhost) requested authentication... auto-authenticating"
   } else {
     putlog "> $nick ($uhost) requested authentication.. who are they?!"
@@ -21,8 +21,8 @@ proc notc_nickopauth {nick uhost handle text} {
 # For killing a dead nickname
 proc notc_nickopkill {tnick uhost handle text} {
   global set nick botnick
-  if {[string tolower $botnick] != [string tolower $nick] && [string tolower $tnick] == [string tolower $set(NickOP)]} {
-    puthelp "PRIVMSG $set(NickOPi) :kill $nick $set(password)"
+  if {[string tolower $botnick] != [string tolower $nick] && [string tolower $tnick] == [string tolower $set(nickop)]} {
+    putquick "PRIVMSG $set(nickopi) :kill $nick $set(password)"
     putlog "> Nickname ($botnick) not registered, attempting to regain real nickname ($nick)"
   } else {
     putlog "> Nickname ($botnick) not registered, please register the nickname..."
@@ -34,34 +34,34 @@ set set(tempnote) ""
 set set(tempcnote) ""
 proc notc_notes {nick uhost handle text} {
   global set
-  if {[string tolower $set(NoteOP)] == [string tolower $nick]} {
+  if {[string tolower $set(noteop)] == [string tolower $nick]} {
     if {[string match "You just received a note from *. /msg NoteOP read *" $text]} {
-      msg $set(NoteOP) "READ [string trimright [lindex $text 10] ]"
+      msg $set(noteop) "READ [string trimright [lindex $text 10] ]"
       putlog "> Recieved NoteOP from [lindex $text 6] -> Continuing to send to Level 200 Operators"
     } elseif {[string match "You just received a channel note from *. /msg NoteOP read *" $text]} {
-      msg $set(NoteOP) "READ [string trimright [lindex $text 11] ]"
+      msg $set(noteop) "READ [string trimright [lindex $text 11] ]"
       putlog "> Recieved NoteOP [lindex $text 7] -> Continuing to send to Level 200 Operators"
     } elseif {[string match "Note * from * -- Sent *" $text]} {
       set set(tempnote) "[string trim [lindex $text 3] ] {[string trim [lrange $text 6 end] ]}"
     } elseif {[string match "* -> * *min: * max: *: *" $text]} {
       set set(tempcnote) "([lindex $set(tempcnote) 1]) $text"
       if {[string length $set(tempcnote)] > "340"} {
-        msg $set(NoteOP) "SEND $set(owner) [letters $set(tempcnote) 340 1] \[+ More\]"
-        msg $set(NoteOP) "SEND $set(owner) \[cont >\] [letters $set(tempcnote) 340 0]"
+        msg $set(noteop) "SEND $set(owner) [letters $set(tempcnote) 340 1] \[+ More\]"
+        msg $set(noteop) "SEND $set(owner) \[cont >\] [letters $set(tempcnote) 340 0]"
       } else {
-        msg $set(NoteOP) "SEND $set(owner) $set(tempcnote)"
+        msg $set(noteop) "SEND $set(owner) $set(tempcnote)"
       }
       set set(tempcnote) ""
     } elseif {[string match "You have a total of * note* (* unread, * read, * other)" $text]} {
       putlog "> NoteOP says I have [string trimleft [lindex $text 7] (] new messages. -> Continueing to see what they are!"
-      msg $set(NoteOP) "READ new"
+      msg $set(noteop) "READ new"
     } elseif {$set(tempnote) != ""} {
       set set(tempnote) "([lindex $set(tempnote) 1]) [lindex $set(tempnote) 0] -> $text"
       if {[string length $set(tempnote)] > "340"} {
-        msg $set(NoteOP) "SEND $set(owner) [letters $set(tempnote) 340 1] \[+ More\]"
-        msg $set(NoteOP) "SEND $set(owner) \[cont >\] [letters $set(tempnote) 340 0]"
+        msg $set(noteop) "SEND $set(owner) [letters $set(tempnote) 340 1] \[+ More\]"
+        msg $set(noteop) "SEND $set(owner) \[cont >\] [letters $set(tempnote) 340 0]"
       } else {
-        msg $set(NoteOP) "SEND $set(owner) $set(tempnote)"
+        msg $set(noteop) "SEND $set(owner) $set(tempnote)"
       }
       set set(tempnote) ""
     }

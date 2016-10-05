@@ -18,6 +18,8 @@ proc msg_deauth {nick uhost handle text} {
   if {$handle == "*" || ![getuser $handle xtra auth]} {
     return
   } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "You did not specify a password."
+  } elseif {![nickinfo $handle auth]} {
     notice $nick $handle "You are not currently authenticated."
   } elseif {![passwdok $handle [lindex $text 0]]} {
     notice $nick $handle "Password mismatch for $handle"
@@ -25,16 +27,16 @@ proc msg_deauth {nick uhost handle text} {
     notice $nick $handle "Password accepted -- Authentication for $handle removed"
     setuser $handle XTRA AUTH 0
     homechan "($nick!$uhost): successfully deauthenticated"
+    if {[llength [notelist $handle new]] > "0"} {
+      notice $nick $handle "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read), Type: /msg $botnick note list or /msg $botnick note list new"
+    }
     deauth_automode $nick $handle
-  } else {
-    putcmdlog "> error ;deauth\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
-    notice $nick $handle "error ;deauth\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
   }
 }
 
 ### AUTH:
 proc msg_auth {nick uhost handle text} {
-  global set
+  global set botnick
   chan_settings auth - $nick $uhost $handle "" ""
   if {$set(sockcommand)} {
     notice $nick $handle "Incorrect procedure: You must authenticate via socket authentication."
@@ -60,11 +62,9 @@ proc msg_auth {nick uhost handle text} {
       putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[passed/userhosts updated\]"
       setuser $nick HOSTS [maskhost $nick!$uhost]
       setuser $nick XTRA USERHOST $uhost
+      setuser $nick XTRA REALHOST
       setuser $nick XTRA AUTH 1
       auth_automode $nick $nick $uhost
-    } else {
-      putcmdlog "> error ;auth\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
-      notice $nick $handle "error ;auth\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
     }
   } elseif {[lindex $text 0] == ""} {
     notice $nick $handle "You did not specify a password"
@@ -78,11 +78,9 @@ proc msg_auth {nick uhost handle text} {
     homechan "\[$handle\]($nick!$uhost): successfully authenticated"
     putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[passed\]"
     setuser $handle XTRA USERHOST $uhost
+      setuser $nick XTRA REALHOST
     setuser $handle XTRA AUTH 1
     setuser $handle XTRA LASTID [unixtime]
     auth_automode $nick $handle $uhost
-  } else {
-    putcmdlog "> error ;auth\[2\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
-    notice $nick $handle "error ;auth\[2\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
   }
 }

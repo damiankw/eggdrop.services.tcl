@@ -10,21 +10,16 @@ bind pub - $set(cmd)op {pub_error pub_op}
 proc pub_op {nick uhost handle chan text} {
   global set
   chan_settings op c $nick $uhost $handle $chan $text
-  if {![validuser $handle] || ![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+  if {![validuser $handle] || [level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
     return
-  } elseif {[chaninfo $chan nochanmsg]} {
-    notice $nick $handle "`commands have been disabled for $chan"
-  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) op]} {
-    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) op] for this command"
+  } elseif {[changet $chan nochanmsg]} {
+    notice $nick $handle "$set(cmd)commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [comget $chan op]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [comget $chan op] for this command"
   } elseif {[lindex $text 0] == ""} {
     pushmode $chan +o $nick
     putcmdlog "> !$handle! ($nick!$uhost) OP\[c\] ($chan)"
   } else {
-    if {[getallchaninfo $chan]} {
-      homechan "Could not locate settings file for $chan... writing"
-      addmainchan $chan
-      getallchaninfo $chan
-    }
     set n ""
     set no ""
     foreach u $text {
@@ -32,11 +27,11 @@ proc pub_op {nick uhost handle chan text} {
         continue
       } elseif {[string tolower $u] == [string tolower $nick]} {
         pushmode $chan +o $u
-      } elseif {[chaninfo $chan oprestrict] == "0"} {
+      } elseif {[changet $chan oprestrict] == "0"} {
         set n $n,$u
         pushmode $chan +o $u
       } elseif {[nick2hand $u] != ""} {
-        if {![suspend [nick2hand $u] $chan] && [nickinfo [nick2hand $u] auth] && [level [nick2hand $u] $chan] >= [chaninfo $chan oprestrict] && [nickinfo [nick2hand $u] userhost] == [getchanhost [nick2hand $u]]} {
+        if {![suspend [nick2hand $u] $chan] && [nickinfo [nick2hand $u] auth] && [level [nick2hand $u] $chan] >= [changet $chan oprestrict] && [nickinfo [nick2hand $u] userhost] == [getchanhost [nick2hand $u]]} {
           set n $n,$u
           pushmode $chan +o $u
         } else {
@@ -72,7 +67,7 @@ proc msg_op {nick uhost handle text} {
       putcmdlog "> !$handle! ($nick!$uhost) OP\[m\] [lindex $text 1] \[opermode\]"
     } elseif {[passwdok $handle [lindex $text 0]]} {
       foreach channel [comchan $nick] {
-        if {[botisop $channel] && ![isop $nick $channel] && [ischanopchan $channel]} {
+        if {[botisop $channel] && ![isop $nick $channel] && [changet $channel active]} {
           pushmode $channel +o $nick
           chan_settings op m $nick $uhost $handle $channel "*** Used Operator Power"
         }
@@ -93,22 +88,15 @@ proc msg_op {nick uhost handle text} {
     notice $nick $handle "Invalid request: [lindex $text 0] is not a valid channel"
   } elseif {![auth_check $nick $uhost $handle [lindex $text 0]] || [level $handle [lindex $text 0]] == "0"} {
     chan_settings op m $nick $uhost $handle [lindex $text 0] $text
-    return
-  } elseif {[level $handle [lindex $text 0]] < [readfile $set(script.dir)/$set(com.file) op]} {
+  } elseif {[level $handle [lindex $text 0]] < [comget [lindex $text 0] op]} {
     chan_settings op m $nick $uhost $handle [lindex $text 0] $text
-    notice $nick $handle "Your level of [level $handle [lindex $text 0]] is less then the required [readfile $set(script.dir)/$set(com.file) op] for this command"
+    notice $nick $handle "Your level of [level $handle [lindex $text 0]] is less then the required [comget [lindex $text 0] op] for this command"
   } elseif {[lindex $text 1] == ""} {
     chan_settings op m $nick $uhost $handle [lindex $text 0] $text
     pushmode [lindex $text 0] +o $nick
     putcmdlog "> !$handle! ($nick!$uhost) OP\[m\] ([lindex $text 0])"
   } else {
     chan_settings op m $nick $uhost $handle [lindex $text 0] $text
-    if {[getallchaninfo [lindex $text 0]]} {
-      homechan "Could not locate settings file for [lindex $text 0]... writing"
-      addmainchan [lindex $text 0]
-      getallchaninfo [lindex $text 0]
-      return
-    }
     set n ""
     set no ""
     foreach u [lrange $text 1 end] {
@@ -116,11 +104,11 @@ proc msg_op {nick uhost handle text} {
         continue
       } elseif {[string tolower $u] == [string tolower $nick]} {
         pushmode [lindex $text 0] +o $u
-      } elseif {[chaninfo [lindex $text 0] oprestrict] > "0"} {
+      } elseif {[changet [lindex $text 0] oprestrict] > "0"} {
         set n $n,$u
         pushmode [lindex $text 0] +o $u
       } elseif {[nick2hand $u] != ""} {
-        if {![suspend [nick2hand $u] [lindex $text 0]] && [nickinfo [nick2hand $u] auth] && [level [nick2hand $u] [lindex $text 0]] >= [chaninfo [lindex $text 0] oprestrict] && [nickinfo [nick2hand $u] userhost] == [getchanhost [nick2hand $u]]} {
+        if {![suspend [nick2hand $u] [lindex $text 0]] && [nickinfo [nick2hand $u] auth] && [level [nick2hand $u] [lindex $text 0]] >= [changet [lindex $text 0] oprestrict] && [nickinfo [nick2hand $u] userhost] == [getchanhost [nick2hand $u]]} {
           set n $n,$u
           pushmode [lindex $text 0] +o $u
         } else {

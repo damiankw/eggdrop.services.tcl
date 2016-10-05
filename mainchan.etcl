@@ -1,0 +1,70 @@
+###
+# Usage: .mainchan <add|del|set|combine> <channel> [<option>]
+###
+
+### MAINCHAN:
+bind dcc - mainchan {dcc_error dcc_mainchan}
+
+### MAIN:
+proc dcc_mainchan {handle idx text} {
+  global set
+  set type [string tolower [lindex $text 0]]
+  set chan [string tolower [lindex $text 1]]
+  set option [string tolower [lindex $text 2]]
+  if {$chan == ""} {
+    putdcc $idx "Invalid request: Where's the channel name?"
+  } elseif {![string match #* $chan]} {
+    putdcc $idx "Invalid request: $chan is not a channel."
+  } elseif {$type == "add" && [ischanopchan $chan]} {
+    putdcc $idx "$chan is already added to the channel database."
+  } elseif {$type == "add"} {
+    putcmdlog "> #$handle# mainchan add $chan"
+    if {![validchan $chan]} {
+      putdcc $idx "Adding channel '$chan' to eggdrop channel database..."
+    }
+    putdcc $idx "Adding channel '$chan' to script channel database..."
+    homechan "$handle has added the main channel '$chan'"
+    addmainchan $chan
+  } elseif {$type == "del" && ![ischanopchan $chan]} {
+    putdcc $idx "$chan is not in the channel database."
+  } elseif {$type == "del"} {
+    putcmdlog "> #$handle# mainchan del $chan"
+    putdcc $idx "Deleting channel '$chan' from the script channel database..."
+    homechan "$handle has removed the main channel '$chan'"
+    delmainchan $chan
+    foreach user [access $chan] {
+      -user $user $chan
+    }
+  } elseif {$type == "set" && $option == ""} {
+    putdcc $idx "Invalid request: You haven't specified if you want to activate the channel or not."
+  } elseif {$type == "set" && ($option == "1" || $option == "yes" || $option == "on")} {
+    putcmdlog "> #$handle# mainchan set $chan *activated*"
+    putdcc $idx "$chan has been activated"
+    chanset $chan active 1
+  } elseif {$type == "set" && ($option == "0" || $option == "no" || $option == "off")} {
+    putcmdlog "> #$handle# mainchan set $chan *deactivated*"
+    putdcc $idx "$chan has been deactivated"
+    chanset $chan active 0
+  } elseif {$type == "combine" && ![ischanopchan $chan]} {
+    putdcc $idx "Invalid request: $chan is not in the channel database."
+  } elseif {$type == "combine" && ![string match #* $option]} {
+    putdcc $idx "Invalid request: $option is not a channel."
+  } elseif {$type == "combine" && $option == ""} {
+    putdcc $idx "Invalid request: Where is the channel you want to combine $chan with?"
+  } elseif {$type == "combine"} {
+    putcmdlog "> #$handle# mainchan combine $chan -> $option"
+    putdcc $idx "Combining channel '$chan' with '$option'..."
+    putdcc $idx "If a user has access in both access, $option will over-rule $chan"
+    foreach user [access $chan] {
+      if {[level $user $chan] > "0"} {
+        +user $user $option [lindex [lastmod $user $chan] 1] [lindex [lastmod $user $chan] 2] [level $user $chan] [aop $user $chan] [aov $user $chan] [protect $user $chan] [lindex [getuser $user hosts] 0]
+      }
+    }
+    putdcc $idx "Removing '$chan' from the script channel database..."
+    delmainchan $chan
+    homechan "$handle successfully combined $chan with $option (removed $chan from database)"
+  } else {
+    putdcc $idx "Invalid request: $type"
+  }
+}
+

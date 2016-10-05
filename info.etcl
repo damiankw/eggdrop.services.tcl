@@ -2,7 +2,7 @@
 # Usage: /msg botnick info <nickname/channel>
 ###
 
-### Info:
+### INFO:
 bind msg - info {msg_error msg_info}
 bind pub - $set(cmd)info {pub_error pub_info}
 
@@ -31,48 +31,48 @@ proc msg_info {nick uhost handle text} {
 proc all_info {type nick uhost handle target} {
   global set
   if {[string match #* $target]} {
-    chan_settings info $type $nick $uhost $handle $target ""
+    chan_settings info $type $nick $uhost $handle $target
   }
-  if {![validuser $handle]} {
+  if {![validuser $handle] || ([string tolower $type] == "c" && [level $handle $target] == "0")} {
     return 
-  } elseif {[string tolower $type] == "c" && [chaninfo $target nochanmsg]} {
-    notice $nick $handle "`commands have been disabled for $target"
-  } elseif {[string match #* $target] && [level $handle $target] < [readfile $set(script.dir)/$set(com.file) info]} {
-    notice $nick $handle "Your level of [level $handle target] is less then the required [readfile $set(script.dir)/$set(com.file) info] for this command"
+  } elseif {[string tolower $type] == "c" && [changet $target nochanmsg]} {
+    notice $nick $handle "$set(cmd)commands have been disabled for $target"
+  } elseif {[string match #* $target] && [level $handle $target] < [comget $target info]} {
+    notice $nick $handle "Your level of [level $handle target] is less then the required [comget $target info] for this command"
   } elseif {[string match #* $target] && [level $handle $target] == "0"} {
     return
   } elseif {[string match #* $target] && ![validchan $target]} {
     notice $nick $handle "Invalid request: $target is not a valid channel"
-  } elseif {[string match #* $target] && ![ischanopchan $target]} {
+  } elseif {[string match #* $target] && ![changet $target active]} {
     notice $nick $handle "$target is not currently being supervised by Services"
   } elseif {[string match #* $target]} {
-    if {[getallchaninfo $target]} {
-      notice $nick $handle "There was an error recieving data for $target"
-      return
-    }
-    if {[chaninfo $target quota] == "0"} {
+    if {[changet $target quota] == "0"} {
       set quota Unlimited
     } else {
-      set quota [chaninfo $target quota]
+      set quota [changet $target quota]
     }
-    if {[chaninfo $target banquota] == "0"} {
+    if {[changet $target banquota] == "0"} {
       set banquota Unlimited
     } else {
-      set banquota [chaninfo $target banquota]
+      set banquota [changet $target banquota]
     }
-    notice $nick $handle "*** Channel information for $target (Peak: [lindex [chaninfo $target peak] 0]) \[[chaninfo $target hash]\] ***"
-    notice $nick $handle "Registered To   : [chaninfo $target owner] ([chaninfo $target address])"
-    notice $nick $handle "Internet URL    : [chaninfo $target url]"
-    notice $nick $handle "Peak Set        : [ctime [lindex [chaninfo $target peak] 1]] $set(timezone)"
-    if {[chaninfo $target keeptopic] > "0"} { notice $nick $handle "Last Topic      : [chaninfo $target topic]" }
-    if {[lindex [chaninfo $target modelock] 0] > "0"} { notice $nick $handle "Mode Locked     : [lindex [chaninfo $target modelock] 1] (Level [lindex [chaninfo $target modelock] 0])" }
-    if {[chaninfo $target keeptopic] > "0"} { notice $nick $handle "Keep Topic      : Locked to level [chaninfo $target keeptopic]" }
-    if {[chaninfo $target nonote] > "0"} { notice $nick $handle "Channel Notes   : Limited to level [chaninfo $target nonote]" }
-    notice $nick $handle "Channel Creation: [ctime [chaninfo $target created]] $set(timezone)"
-    notice $nick $handle "Channel Idle    : [cduration [expr [unixtime] - [chaninfo $target idle]]]"
-    notice $nick $handle "Manager Seen    : [cduration [expr [unixtime] - [chaninfo $target manseen]]]"
+    set owners ""
+    foreach owner [changet $target owner] {
+      set owners "$owners, $owner"
+    }
+    notice $nick $handle "*** Channel information for $target (Peak: [lindex [changet $target peak] 0]) \[[changet $target hash]\] ***"
+    notice $nick $handle "Registered To   : [string trim $owners ", "] ([nickinfo [lindex [changet $target owner] 0] userhost])"
+    notice $nick $handle "Internet URL    : [changet $target url]"
+    notice $nick $handle "Peak Set        : [ctime [lindex [changet $target peak] 1]] $set(timezone)"
+    if {[changet $target keeptopic] > "0"} { notice $nick $handle "Last Topic      : [changet $target topic]" }
+    if {[lindex [changet $target modelock] 0] > "0"} { notice $nick $handle "Mode Locked     : [lindex [changet $target modelock] 1] (Level [lindex [changet $target modelock] 0])" }
+    if {[changet $target keeptopic] > "0"} { notice $nick $handle "Keep Topic      : Locked to level [changet $target keeptopic]" }
+    if {[changet $target nonote] > "0"} { notice $nick $handle "Channel Notes   : Limited to level [changet $target nonote]" }
+    notice $nick $handle "Channel Creation: [ctime [changet $target created]] $set(timezone)"
+    notice $nick $handle "Channel Idle    : [cduration [expr [unixtime] - [changet $target idle]]]"
+    notice $nick $handle "Manager Seen    : [cduration [expr [unixtime] - [changet $target manseen]]]"
     notice $nick $handle "Database Summary: [llength [access $target 1]] entries, with $quota quota, $banquota ban quota"
-    if {[chaninfo $target funmsg]} { notice $nick $handle "Game Settings   : Magic 8Ball, Mimic, Fun Messages" }
+    if {[changet $target funmsg]} { notice $nick $handle "Game Settings   : Magic 8Ball, Mimic, Fun Messages" }
     notice $nick $handle "Owner Settings  : [ownersettings $target]"
     notice $nick $handle "*** End of Information ***"
     putcmdlog "> !$handle! ($nick!$uhost) INFO\[$type\] $target"
@@ -88,20 +88,30 @@ proc all_info {type nick uhost handle target} {
     } else {
       set lastid "[ctime [nickinfo $target lastid]] $set(timezone)"
     }
+    set tmp_chans ""
+    foreach tmp_chan [getchannelaccess $target] {
+      set tmp_chans "$tmp_chans, [changet [lindex $tmp_chan 0] channel]"
+    }
     notice $nick $handle "*** Information about $target ***"
     notice $nick $handle "Last Address : [nickinfo $target userhost]"
+    if {[nickinfo $target realhost] != "0" && [isspecial $handle] >= "200"} {
+      notice $nick $handle "Real Address : [nickinfo $target realhost]"
+    }
     notice $nick $handle "Last Online  : $lastid"
     notice $nick $handle "Creation     : [ctime [nickinfo $target created]] $set(timezone)"
     notice $nick $handle "Current Time : [ctime [unixtime]] $set(timezone)"
-    if {[isspecial $handle all] >= "200"} {
-      notice $nick $handle "Channels     : [llength [getchannelaccess $target]]"
-      notice $nick $handle "First Address: [nickinfo $target firsthost]"
+    if {[nickinfo $target asl] != "0"} {
+      notice $nick $handle "Age/Sex/Loc. : [nickinfo $target asl]"
     }
     if {[nickinfo $target url] != "0"} {
       notice $nick $handle "Web Address  : [nickinfo $target url]"
     }
-    if {[nickinfo $target email] != "0"} {
+    if {[nickinfo $target email] != "0" && ([isspecial $handle] >= "200" || [nickinfo $target showemail])} {
       notice $nick $handle "Email Address: [nickinfo $target email]"
+    }
+    if {[isspecial $handle] >= "200"} {
+      notice $nick $handle "Channels     : [llength [getchannelaccess $target]] ([string trimleft $tmp_chans ", "])"
+      notice $nick $handle "First Address: [nickinfo $target firsthost]"
     }
     notice $nick $handle "Options Set  : [nicksettings $target]"
     notice $nick $handle "*** End of Information ***"

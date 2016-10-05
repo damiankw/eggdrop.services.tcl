@@ -1,0 +1,28 @@
+###
+# Usage: .homechan <channel>
+###
+
+### HOMECHAN:
+bind dcc - homechan {dcc_error dcc_homechan}
+
+### MAIN:
+proc dcc_homechan {handle idx text} {
+  global set
+  set chan [string tolower [lindex $text 0]]
+  if {$chan == ""} {
+    putdcc $idx "Invalid request: Where's the channel name?"
+  } elseif {[string tolower $chan] == [string tolower $set(homechan)]} {
+    putdcc $idx "$chan is already the home channel"
+  } elseif {[string match #* $chan]} {
+    putdcc $idx "$chan is not a channel."
+  } else {
+    putcmdlog "> #$handle# homechan $chan"
+    putdcc $idx "Successfully changed the home channel to $chan"
+    homechan "$handle changed the home channel from $set(homechan) to $chan"
+    setinfo homechan $chan
+    if {![validchan $chan]} {
+      channel add $chan
+    }
+  }
+}
+

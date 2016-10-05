@@ -15,10 +15,13 @@ proc pub_clist {nick uhost handle chan text} {
 ### QUERY:
 proc msg_clist {nick uhost handle text} {
   global set botnick
-  if {![auth_check $nick $uhost $handle ""] || [isspecial $handle all] == "0"} {
-    return
-  } elseif {[isspecial $handle all] < "200"} {
-    notice $nick $handle "Your 'special' level of [isspecial $handle all] is less then the required 200 (+m) for this command"
+  if {![validuser $handle] || [isspecial $handle] == "0"} {
+  } elseif {![nickinfo $handle auth]} {
+    notice $nick $handle "You are not yet authenticated."
+  } elseif {[nickinfo $handle userhost] != $uhost} {
+    notice $nick $handle "Your current userhost of '$uhost' is not the one you authenticated with."
+  } elseif {[isspecial $handle] < "200"} {
+    notice $nick $handle "Your 'special' level of [isspecial $handle] is less then the required 200 (+m) for this command"
   } elseif {[lindex $text 0] == ""} {
     notice $nick $handle "Invalid request: Who's Channel List do you want to recieve?"
   } elseif {[getchannelaccess [lindex $text 0]] == ""} {
@@ -43,12 +46,12 @@ proc msg_clist {nick uhost handle text} {
       set aov [lindex $chan 3]
       set prot [lindex $chan 4]
       set chan [lindex $chan 0]
-      if {[ischanopchan $chan]} {
+      if {[changet $chan active]} {
         set status \[active\]
       } else {
         set status \[inactive\]
       }
-      notice $sendnick $sendhandle "[align $cnt 5 " " L] [align [chaninfo $chan channel] 30 " " L]  [align $level 5 " " L] [align [change $aop yesno] 4 " " L] [align [change $aov yesno] 4 " " L] [align [change $prot yesno] 5 " " L] $status"
+      notice $sendnick $sendhandle "[align $cnt 5] [align [changet $chan channel] 30]  [align $level 5] [align [change $aop yesno] 4] [align [change $aov yesno] 4] [align [change $prot yesno] 5] $status"
       incr cnt 1
       incr cnter [llength [access $chan 1]]
     }

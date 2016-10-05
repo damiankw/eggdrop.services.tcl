@@ -36,8 +36,8 @@ proc all_delme {type nick uhost handle chan text} {
     notice $nick $handle "You are not yet authenticated."
   } elseif {[nickinfo $handle userhost] != $uhost} {
     notice $nick $handle "Your current userhost of '$uhost' is not the one you authenticated with."
-  } elseif {[string tolower $type] == "c" && [chaninfo $chan nochanmsg]} {
-    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {[string tolower $type] == "c" && [changet $chan nochanmsg]} {
+    notice $nick $handle "$set(cmd)commands have been disabled for $chan"
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
   } else {

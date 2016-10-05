@@ -1,0 +1,57 @@
+###
+# Usage: /msg botnick setme <email|pass|url|asl|usemsg|autoid|aov|aop|showemail|noteonadd|noteondel|noteonset|tellbyemail> <new value>
+###
+
+### SET:
+bind msg - setme {msg_error msg_setme}
+
+### QUERY:
+proc msg_setme {nick uhost handle text} {
+  set command [string tolower [lindex $text 0]]
+  set value [lrange $text 1 end]
+  if {![validuser $handle]} {
+    return
+  } elseif {$command == ""} {
+    notice $nick $handle "Invalid request: Need argument"
+  } elseif {$command == "email"} {
+    if {[lindex $value 0] == ""} {
+      notice $nick $handle "Error: Email address '(null)' is invalid"
+    } elseif {![string match *@*.* [lindex $value 0]]} {
+      notice $nick $handle "Error: Email address '[lindex $value 0]' is invalid"
+    } else {
+      notice $nick $handle "Setting for 'email' now set to [lindex $value 0]"
+      setuser $handle XTRA EMAIL [lindex $value 0]
+      putcmdlog "> !$handle! ($nick!$uhost) set email to '[lindex $value 0]'"
+    }
+  } elseif {$command == "pass" || $command == "password"} {
+    if {[string length [lindex $value 0]] < "6" || [string length [lindex $value 0]] > "20"} {
+      notice $nick $handle "Please use a password between 6 and 20 characters in length"
+    } else {
+      notice $nick $handle "Setting for 'password' now set to [lindex $value 0]"
+      setuser $handle PASS [lindex $value 0]
+      putcmdlog "> !$handle ($nick!$uhost) changed their password..."
+    }
+  } elseif {$command == "url" || $command == "asl"} {
+    notice $nick $handle "Setting for '$command' now set to [lindex $value 0]"
+    setuser $handle XTRA [string toupper $command] [lindex $value 0]
+    putcmdlog "> !$handle ($nick!$uhost) set $command to '[lindex $value 0]'"
+  } elseif {$command == "usemsg"} {
+    if {[string tolower [lindex $value 0]] != "on" && [string tolower [lindex $value 0]] != "off"} {
+      notice $nick $handle "Invalid request: Use ON/OFF only"
+    } else {
+      notice $nick $handle "Setting for '$command' now set to [string tolower [lindex $value 0]]"
+      setuser $handle XTRA INTERFACE [change [lindex $value 0] 10]
+      putcmdlog "> !$handle ($nick!$uhost) set interface to '[lindex $value 0]'"
+    }
+  } elseif {$command == "autoid" || $command == "aov" || $command == "aop" || $command == "showemail" || $command == "noteonadd" || $command == "noteondel" || $command == "noteonset" || $command == "tellbyemail"} {
+    if {[string tolower [lindex $value 0]] != "on" && [string tolower [lindex $value 0]] != "off"} {
+      notice $nick $handle "Invalid request: Use ON/OFF only"
+    } else {
+      notice $nick $handle "Setting for '$command' now set to [string tolower [lindex $value 0]]"
+      setuser $handle XTRA [string toupper $command] [change [lindex $value 0] 10]
+      putcmdlog "> !$handle ($nick!$uhost) set $command to '[lindex $value 1]'"
+    }
+  } else {
+    notice $nick $handle "Invalid request: [lrange $text 0 end]"
+  }
+}

@@ -30,24 +30,24 @@ proc msg_topic {nick uhost handle text} {
 proc all_topic {type nick uhost handle chan text} {
   global set botnick
   chan_settings topic $type $nick $uhost $handle $chan $text
-  if {![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
     return
   } elseif {![validchan $chan]} {
     notice $nick $handle "Invalid request: $chan is not a valid channel"
-  } elseif {[string tolower $type] == "c" && [chaninfo $chan nochanmsg]} {
-    notice $nick $handle "`commands have been disabled for $chan"
-  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) topic]} {
-    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) topic] for this command"
-  } elseif {[level $handle $chan] < [chaninfo $chan keeptopic]} {
-    notice $nick $handle "Your level of [level $handle $chan] is lower than the minimum level of [chaninfo $chan keeptopic] required to change topics in $chan"
+  } elseif {[string tolower $type] == "c" && [changet $chan nochanmsg]} {
+    notice $nick $handle "$set(cmd)commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [comget $chan topic]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [comget $chan topic] for this command"
+  } elseif {[level $handle $chan] < [changet $chan keeptopic]} {
+    notice $nick $handle "Your level of [level $handle $chan] is lower than the minimum level of [changet $chan keeptopic] required to change topics in $chan"
   } else {
     if {[lindex $text 0] == ""} {
-      set topic [readr $set(script.dir)/$set(topics.file)]
+      set topic [readr $set(data.dir)/$set(topics.file)]
     } else {
       set topic $text
     }
     puthelp "TOPIC $chan :$topic"
-    setchaninfo $chan topic $topic
+    chanset $chan topic $topic
     putcmdlog "> !$handle! ($nick!$uhost) TOPIC\[$type\] ($chan): [charstrip $topic]"
   }
 }

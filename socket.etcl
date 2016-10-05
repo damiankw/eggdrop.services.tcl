@@ -1,0 +1,112 @@
+proc listen_command {idx} {
+  global set
+  control $idx socket_command
+  putcmdlog "> Accepted DCC connection from: [lindex [replace [findidx $idx] @ " "] 3]"
+  putdcc $idx "001 Please authenticate with: nickname handle password \[command\]"
+}
+
+proc socket_command {idx text} {
+  global set botnick
+  set nick [lindex $text 0]
+  set handle [lindex $text 1]
+  set pass [lindex $text 2]
+  set command [string tolower [lindex $text 3]]
+  set data [lrange $text 4 end]
+  set return 0
+  if {$text == ""} {
+    return
+  } elseif {$nick == ""} {
+    putdcc $idx "002 You did not specify a nickname."
+  } elseif {$handle == ""} {
+    putdcc $idx "002 You did not specify a handle."
+  } elseif {$pass == ""} {
+    putdcc $idx "002 You did not specify a password."
+  } elseif {![validuser $handle]} {
+    putdcc $idx "002 You do not have access to any commands."
+    if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
+      putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) tried to authenticate but are unrecognized?!"
+    }
+  } elseif {[nickinfo $handle pass] == ""} {
+    putdcc $idx "002 You have not yet set a password."
+  } elseif {[getchanhost $nick] == ""} {
+    putdcc $idx "002 Your nickname ($nick) could not be located on any channels I monitor."
+    if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
+      putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) AUTH\[s\] \[can't find userhost\]"
+    }
+  } elseif {[string tolower [nick2hand $nick]] != [string tolower $handle] && [nick2hand $nick] != "*"} {
+    putdcc $idx "002 Your nickname ($nick) is known as [nick2hand $nick] not $handle."
+    if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
+      putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) AUTH\[s\] \[wrong handle\]"
+    }
+  } elseif {![passwdok $handle $pass]} {
+    putdcc $idx "002 Password mismatch for $handle"
+    if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
+      homechan "\[$handle\]($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])): failed authentication, wrong password"
+      putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) AUTH\[s\] \[wrong password\]"
+    }
+  } elseif {[nick2hand $nick] == "*"} {
+    if {[passwdok $handle $pass] && [llength [getuser $handle HOSTS]] >= $set(maxhosts)} {
+      putdcc $idx "002 Password Accepted -- Unfortunately you have no userhost slots left. Authentication failed"
+      if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
+        homechan "\[$handle\]($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])): passed authentication, no userhost slots left - authentication failed"
+        putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) AUTH\[s\] \[no userhost slots left\]"
+      }
+    } elseif {[passwdok $handle $pass]} {
+      putdcc $idx "Password Accepted -- You have been authenticated as $handle \[userhosts updated\]"
+      set return 1
+      if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
+        if {[llength [notelist $handle new]] > "0"} {
+          putdcc $idx "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read)"
+          putdcc $idx "Type: /msg $botnick note list or /msg $botnick note list new"
+        }
+        homechan "\[$handle\]($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])): successfully authenticated as '$handle' and userhosts updated"
+        putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) AUTH\[s\] \[passed/userhosts updated\]"
+        setuser $handle HOSTS [maskhost $nick![getchanhost $nick]]
+        setuser $handle XTRA USERHOST [getchanhost $nick]
+        setuser $handle XTRA REALHOST [lindex [replace [findidx $idx] @ " "] 3]
+        setuser $handle XTRA AUTH 1
+        auth_automode $nick $handle [getchanhost $nick]
+      }
+    } else {
+      putcmdlog "> error ;sockauth\[\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+      notice $nick $handle "error ;sockauth\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+    }
+  } elseif {[passwdok $handle $pass]} {
+    putdcc $idx "Password Accepted -- You have been authenticated as $handle"
+    set return 1
+    if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
+      if {[llength [notelist $handle new]] > "0"} {
+        putdcc $idx "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read)"
+        putdcc $idx "Type: /msg $botnick note list or /msg $botnick note list new"
+      }
+      homechan "\[$handle\]($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])): successfully authenticated"
+      putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) AUTH\[s\] \[passed\]"
+      setuser $handle XTRA USERHOST [getchanhost $nick]
+      setuser $handle XTRA REALHOST [lindex [replace [findidx $idx] @ " "] 3]
+      setuser $handle XTRA AUTH 1
+      auth_automode $nick $handle [getchanhost $nick]
+    }
+  } else {
+    putcmdlog "> error ;sockauth\[2\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+    notice $nick $handle "error ;sockauth\[2\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+  }
+  if {$command != "" && !$return} {
+    killdcc $idx
+    return
+  } elseif {$command != "" && [getchanhost $nick] != [nickinfo $handle userhost]} {
+    putdcc $idx "002 You are using the wrong user@host on nickname"
+    putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) COMMAND\[s\] \[tried '$command' but are using the wrong userhost\]"
+    homechan "\[$handle\]($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) tried '$command' but is using the wrong userhost?"
+  } elseif {$command != "" && ![nickinfo $handle auth]} {
+    putdcc $idx "002 You are not yet authenticated."
+    putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) COMMAND\[s\] \[tried '$command' but is not authenticated\]"
+    homechan "\[$handle\]($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) tried '$command' but is not authenticated?"
+  } elseif {$command != "" && $command == "listban"} {
+    dcc_listban $handle $idx $data
+  } elseif {$command != "" && $command == "access"} {
+    dcc_access $handle $idx $data
+  } elseif {$command != ""} {
+    putdcc $idx "002 $command isn't a valid command."
+  }
+  killdcc $idx
+}

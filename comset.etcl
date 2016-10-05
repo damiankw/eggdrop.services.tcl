@@ -1,0 +1,60 @@
+###
+# Usage: /msg botnick comset [<channel>] <command> <value>
+###
+
+### COMSET:
+bind msg - comset {msg_error msg_comset}
+bind pub - $set(cmd)comset {pub_error pub_comset}
+
+### CHANNEL:
+proc pub_comset {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_comset c $nick $uhost $handle $chan $text
+  }
+}
+
+### QUERY:
+proc msg_comset {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } else {
+    all_comset m $nick $uhost $handle [lindex $text 0] [lrange $text 1 end]
+  }
+}
+
+### MAIN:
+proc all_comset {type nick uhost handle chan text} {
+  global set botnick
+  chan_settings comget $type $nick $uhost $handle $chan $text
+  if {[level $handle $chan] == "0" || ![auth_check $nick $uhost $handle $chan]} {
+    return
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } elseif {[string tolower $type] == "c" && [changet $chan nochanmsg]} {
+    notice $nick $handle "$set(cmd)commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [comget $chan comset]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [comget $chan comset] for this command"
+  } else {
+    set command [string tolower [lindex $text 0]]
+    set value [string tolower [lindex $text 1]]
+    if {$command == ""} {
+      notice $nick $handle "Invalid request: What command are you changing?"
+    } elseif {$value == ""} {
+      notice $nick $handle "Invalid request: What are you setting this to?"
+    } elseif {[readfile $set(data.dir)/[file_change $chan].com $command] == ""} {
+      notice $nick $handle "Invalid request: $command doesn't seem to be a valid command on $chan"
+    } elseif {[comget $chan $command] > [level $handle $chan]} {
+      notice $nick $handle "The current level of [comget $chan $command] for $command exceeds your level [level $handle $chan]"
+    } elseif {![isnum $value] || $value > "200" || $value < "0"} {
+      notice $nick $handle "Invalid request: The valid levels are between 0-200"
+    } else {
+      notice $nick $handle "Command level for '$command' on $chan now set to '$value' from '[comget $chan $command]'"
+      writefile $set(data.dir)/[file_change $chan].com $command $value
+    }
+  }
+  putcmdlog "> !$handle! ($nick!$uhost) COMSET\[$type\] ($chan): $text"
+}

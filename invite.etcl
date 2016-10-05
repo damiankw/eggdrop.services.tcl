@@ -13,12 +13,12 @@ proc msg_invite {nick uhost handle text} {
     notice $nick $handle "Invalid request: Wheres the channel name?"
   } elseif {![string match #* [lindex $text 0]]} {
     notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
-  } elseif {![auth_check $nick $uhost $handle [lindex $text 0] || [level $handle [lindex $text 0]] == "0" || ![ischanopchan [lindex $text 0]]} {
+  } elseif {![auth_check $nick $uhost $handle [lindex $text 0] || [level $handle [lindex $text 0]] == "0" || ![changet [lindex $text 0] active]} {
     return
   } elseif {![validchan [lindex $text 0]]} {
     notice $nick $handle "Invalid request: [lindex $text 0] is not a valid channel"
-  } elseif {[level $handle [lindex $text 0]] < [readfile $set(script.dir)/$set(com.file) invite]} {
-    notice $nick $handle "Your level of [level $handle [lindex $text 0]] is less then the required [readfile $set(script.dir)/$set(com.file) invite] for this command"
+  } elseif {[level $handle [lindex $text 0]] < [comget $chan invite]} {
+    notice $nick $handle "Your level of [level $handle [lindex $text 0]] is less then the required [comget $chan invite] for this command"
   } elseif {![botisop [lindex $text 0]]} {
     notice $nick $handle "I am not currently an operator in $chan"
   } elseif {[onchan $nick $chan]} {
