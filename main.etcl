@@ -1,0 +1,259 @@
+## This is basically for all the shit I couldn't find a place to put elsewhere.
+
+# What the eggdrop does on connect to a server.
+set init-server {
+  utimer 1 server_connect
+  utimer 1 check_settings
+}
+set ctcp-version "$nick - \[eggdrop v[lindex $version 0]\] Testikles` v[lindex $set(version) 0] (by Cyborg- - #Testikles`) 2001"
+
+# Main bindings..
+bind topc - * {topc_error action_topc}
+bind join - * {join_error action_join}
+bind part - * {part_error action_part}
+bind sign - * {sign_error action_sign}
+bind kick - * {kick_error action_kick}
+bind nick - * {nick_error action_nick}
+bind mode - * {mode_error action_mode}
+
+# Main procedures
+proc action_mode {nick uhost handle chan mode victim} {
+  global set botnick
+  if {![ischanopchan $chan] || [string tolower $nick] == [string tolower $botnick]} {
+    return
+  } elseif {$mode == "+o" && [string tolower $victim] == [string tolower $botnick]} {
+    if {[topic $chan] != [chaninfo $chan topic]} {
+      puthelp "TOPIC $chan :[chaninfo $chan topic]"
+    }
+    if {[chaninfo $chan oprestrict] > "0"} {
+      set ns ""
+      set an ""
+      foreach n [chanlist $chan] {
+        if {![chaninfo $chan mustid] && [getchanhost [nick2hand $n]] == [nickinfo [nick2hand $n] userhost] && ![nickinfo [nick2hand $n] auth]} {
+          if {[aop [nick2hand $n] $chan] && ![isop $n $chan]} {
+            pushmode $chan +o $n
+          } elseif {[aov [nick2hand $n] $chan] && ![isvoice $n $chan]} {
+            pushmode $chan +v $n
+          }
+          set an "$an$n "
+        } elseif {![isop $n $chan] || [string tolower $n] == [string tolower $botnick]} {
+          continue
+        } elseif {[nick2hand $n] == "" || [suspend [nick2hand $n] $chan] || [level [nick2hand $n] $chan] < [chaninfo $chan oprestrict] || ![nickinfo [nick2hand $n] auth] || [nickinfo [nick2hand $n] userhost] != [getchanhost $n]} {
+          pushmode $chan -o $n
+          set ns $ns,$n
+        }
+      }
+      if {$ns != ""} {
+        notice $ns "" "$chan is currently in operator restriction mode. You do not have operator access to this channel."
+        putcmdlog "> +OpRestrict on $chan deopd: $ns"
+      }
+      if {$an != "" && ![chaninfo $chan mustid]} {
+        homechan "-MustID on $chan auto-moded: $an"
+        putcmdlog "> -MustID on $chan auto-moded: $an"
+      }
+    }
+  } elseif {($mode == "+o" && [chaninfo $chan oprestrict] > "0") && ([nick2hand $victim] == "" || [suspend [nick2hand $victim] $chan] || [level [nick2hand $victim] $chan] < [chaninfo $chan oprestrict] || ![nickinfo [nick2hand $victim] auth] || [nickinfo [nick2hand $victim] userhost] != [getchanhost $victim]) && [string tolower $nick] != [string tolower $botnick]} {
+    pushmode $chan -o $victim
+    notice $nick $handle "<<<<ENTER SHIT>>>>"
+  } elseif {[level $handle $chan] < [lindex [chaninfo $chan modelock] 0]} {
+    set cnt 2
+    set mo ""
+    foreach m [split [lindex [chaninfo $chan modelock] 1] ""] {
+      if {$m == "+"} {
+        set mo +
+      } elseif {$m == "-"} {
+        set mo -
+      } elseif {$mo == "+"} {
+        if {"-$m" == $mode && ($m == "l" || $m == "k")} {
+          pushmode $chan +$m [lindex [chaninfo $chan modelock] $cnt]
+          incr cnt 1
+        } elseif {"-$m" == $mode} {
+          pushmode $chan +$m
+        }
+      } elseif {$mo == "-"} {
+        if {"+$m" == $mode && $m == "k"} {
+          pushmode $chan -$m $victim
+        } elseif {"+$m" == $mode} {
+          pushmode $chan -$m
+        }
+      }
+    }
+  }
+}
+
+proc action_nick {nick uhost handle chan newnick} {
+  global set botnick
+  chan_settings nick - $nick $uhost $handle $chan ""
+  if {![ischanopchan $chan] || ![matchban $newnick!$uhost $chan]} {
+    return
+  } else {
+    foreach ban [banlist $chan] {
+      set rn [lindex $ban 1]
+      if {[string match [string tolower [lindex $ban 0]] [string tolower $botnick![getchanhost $botnick]]]} {
+        continue
+      } elseif {[string match [string tolower [lindex $ban 0]] [string tolower $newnick!$uhost]]} {
+        pushmode $chan +b [lindex $ban 0]
+        flushmode $chan
+        putkick $chan $newnick [getbanreason $chan [lindex $ban 0]]
+        putlog "> !$handle! (\[$nick -> $newnick\]!$uhost): activated $chan ban of '[lindex $ban 0]': [charstrip [getbanreason $chan [lindex $ban 0]]]"
+        return
+      }
+    }
+  }
+}
+
+proc action_kick {nick uhost handle chan victim reason} {
+  global set botnick
+  chan_settings kick - $nick $uhost $handle $chan ""
+  set vichandle [nick2hand $victim]
+  if {![ischanopchan $chan]} {
+    return
+  } elseif {[string tolower $victim] == [string tolower $botnick] && ([isspecial $handle $chan] >= "200" || [level $handle $chan] >= "200")} {
+    homechan "\[$handle\]($nick!$uhost): kicked me from $chan.. they are an owner so i will not suspend"
+    return
+  } elseif {[string tolower $victim] == [string tolower $botnick]} {
+    homechan "\[$handle\]($nick!$uhost): kicked me from $chan.. suspending..."
+    +suspend $chan $handle 300 "Kicking $botnick (me) from $chan"
+    return
+  } elseif {[chaninfo $chan oprestrict] > "0" && ([chaninfo $chan oprestrict] > [level $handle $chan] || ![nickinfo $handle auth] || [nickinfo $handle userhost] != $uhost || [level $handle $chan] == "0" || [suspend $handle $chan]) && [string tolower $nick] != [string tolower $botnick]} {
+    pushmode $chan -o $nick
+    notice $nick $handle "You have not yet authenticated yourself to me: /msg $botnick auth <password>"
+  } elseif {[level $vichandle $chan] > [level $handle $chan] && [nickinfo $vichandle auth] && [protect $vichandle $chan] && [nickinfo $vichandle userhost] == [getchanhost $victim] && [string tolower $nick] != [string tolower $botnick]} {
+    putkick $chan $nick "$victim \[$vichandle\] is a protected channel member"
+    +suspend $chan $handle 300 "Kicking $victim ($vichandle) from $chan"
+  }
+  if {![nickinfo $vichandle auth] || ![validuser $vichandle]} {
+    return
+  } elseif {[extext [comchan $victim] $chan] == "" && ([hand2nick $vichandle] == "" || [string tolower [hand2nick $vichandle]] == [string tolower $victim])} {
+    putlog "> !$vichandle! ($victim![getchanhost $victim]): got kicked from $chan.. no valid handles around... authentication expired"
+    homechan "\[$vichandle\]($victim![getchanhost $victim]): got kicked from $chan.. authentication expired"
+    setuser $vichandle XTRA AUTH 0
+  } elseif {[extext [comchan $victim] $chan] == "" && [string tolower [hand2nick $vichandle]] == [string tolower $botnick]} {
+    putlog "> !$vichandle! ($victim![getchanhost $victim]): got kicked from $chan.. was going to move auth onto [hand2nick $vichandle] but it's me... authentication expired"
+    homechan "\[$vichandle\]($victim![getchanhost $victim]): got kicked from $chan.. authentication expired"
+    setuser $vichandle XTRA AUTH 0
+  } elseif {[extext [comchan $victim] $chan] == "" && [hand2nick $vichandle] != "" && [getchanhost [hand2nick $vichandle]] == [nickinfo $vichandle userhost]} {
+    putlog "> !$vichandle! ($victim![getchanhost $victim]): got kicked from $chan.. [hand2nick $vichandle] ([getchanhost [hand2nick $vichandle]]) took authentication..."
+    homechan "\[$vichandle\]($victim![getchanhost $victim]): got kicked from $chan.. authentication moved to [hand2nick $vichandle] ([getchanhost [hand2nick $vichandle]])"
+  }
+}
+
+proc action_sign {nick uhost handle chan reason} {
+  global set botnick
+  chan_settings quit - $nick $uhost $handle $chan ""
+  if {![nickinfo $handle auth] || ![validuser $handle] || [string tolower $nick] == [string tolower $botnick]} {
+    return
+  } elseif {[hand2nick $handle] == "" || [string tolower [hand2nick $handle]] == [string tolower $nick]} {
+    putlog "> !$handle! ($nick!$uhost): quit irc.. no valid handles around... authentication expired"
+    homechan "\[$handle\]($nick!$uhost): quit irc.. authentication expired"
+    setuser $handle XTRA AUTH 0
+  } elseif {[string tolower [hand2nick $handle]] == [string tolower $botnick]} {
+    putlog "> !$handle! ($nick!$uhost): quit irc.. was going to move auth onto [hand2nick $handle] but it's me... authentication expired"
+    homechan "\[$handle\]($nick!$uhost): quit irc.. authentication expired"
+    setuser $handle XTRA AUTH 0
+  } elseif {[hand2nick $handle] != "" && [getchanhost [hand2nick $handle]] == [nickinfo $handle userhost]} {
+    putlog "> !$handle! ($nick!$uhost): quit irc.. [hand2nick $handle] ([getchanhost [hand2nick $handle]]) took authentication..."
+    homechan "\[$handle\]($nick!$uhost): quit irc.. authentication moved to [hand2nick $handle] ([getchanhost [hand2nick $handle]])"
+  } else {
+    putlog "> error ;quit\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+    homechan "error ;quit\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+  }
+}
+
+
+proc action_part {nick uhost handle chan} {
+  global set botnick
+  chan_settings part - $nick $uhost $handle $chan ""
+  if {![nickinfo $handle auth] || ![validuser $handle] || [string tolower $nick] == [string tolower $botnick]} {
+    return
+  } elseif {([extext [comchan $nick] $chan] == "" && [hand2nick $handle] == "") || [string tolower [hand2nick $handle]] == [string tolower $botnick]} {
+    putlog "> !$handle! ($nick!$uhost): parted $chan.. no valid handles around... authentication expired"
+    homechan "\[$handle\]($nick!$uhost): parted $chan.. authentication expired"
+    setuser $handle XTRA AUTH 0
+  } elseif {[string tolower [hand2nick $handle]] == [string tolower $botnick]} {
+    putlog "> !$handle! ($nick!$uhost): parted $chan.. was going to move auth onto [hand2nick $handle] but it's me... authentication expired"
+    homechan "\[$handle\]($nick!$uhost): parted $chan.. authentication expired"
+    setuser $handle XTRA AUTH 0
+  } elseif {[hand2nick $handle] != "" && [getchanhost [hand2nick $handle]] == [nickinfo $handle userhost] && [string tolower $nick] != [string tolower [hand2nick $handle]]} {
+    putlog "> !$handle! ($nick!$uhost): parted $chan.. [hand2nick $handle] ([getchanhost [hand2nick $handle]]) took authentication..."
+    homechan "\[$handle\]($nick!$uhost): parted $chan.. authentication moved to [hand2nick $handle] ([getchanhost [hand2nick $handle]])"
+  }
+}
+
+proc action_topc {nick uhost handle chan topic} {
+  global set botnick
+  chan_settings topic - $nick $uhost $handle $chan ""
+  if {[getallchaninfo $chan] && [ischanopchan $chan]} {
+    homechan "Could not locate settings file for $chan... writing"
+    addmainchan $chan
+    getallchaninfo $chan
+  }
+  if {![ischanopchan $chan] || [string tolower $nick] == [string tolower $botnick] || ($nick == "*" && $uhost == "*" && $handle == "*")} {
+    return
+  } elseif {[chaninfo $chan keeptopic] == "0" || [string tolower $nick] == [string tolower $set(ChanOP)]} {
+    setchaninfo $chan topic $topic
+  } elseif {[level $handle $chan] < [chaninfo $chan keeptopic] || ![nickinfo $handle auth] || [nickinfo $handle userhost] != $uhost} {
+    puthelp "TOPIC $chan :[chaninfo $chan topic]"
+    notice $nick $handle "$chan has topics locked to level [chaninfo $chan keeptopic] or higher"
+  } elseif {[suspend $handle $chan]} {
+    puthelp "TOPIC $chan :[chaninfo $chan topic]"
+    notice $nick $handle "You are currently suspended in $chan. You cannot change the topic here."
+  } else {
+    setchaninfo $chan topic $topic
+  }
+}
+
+proc action_join {nick uhost handle chan} {
+  global set botnick
+  chan_settings join - $nick $uhost $handle $chan ""
+  if {[ischanopchan $chan] && [llength [chanlist $chan]] > [lindex [chaninfo $chan peak] 0]} {
+    if {[chaninfo $chan tellpeak]} {
+      msg $chan "Peak Broken: $nick ($uhost) set the new peak at [llength [chanlist $chan]] (last broke [duration [expr [unixtime] - [lindex [chaninfo $chan peak] 1]]])"
+    }
+    setchaninfo $chan peak "[llength [chanlist $chan]] [unixtime]"
+  }
+  if {[level $handle $chan] > "0"} {
+    setuser $handle XTRA LASTSEEN([string toupper $chan]) [unixtime]
+  }
+  if {![ischanopchan $chan] || [string tolower $nick] == [string tolower $botnick]} {
+    return
+  } elseif {[chaninfo $chan restrict] > [level $handle $chan]} {
+    pushmode $chan +b [maskhost $nick!$uhost]
+    flushmode $chan
+    putkick $chan $nick "$chan restricted to level [chaninfo $chan restrict] or higher"
+  } elseif {[matchban [string tolower $nick!$uhost] $chan]} {
+    foreach ban [banlist $chan] {
+      set rn [lindex $ban 1]
+      if {[string match [string tolower [lindex $ban 0]] [string tolower $nick!$uhost]]} {
+        pushmode $chan +b [lindex $ban 0]
+        flushmode $chan
+        putkick $chan $nick [getbanreason $chan [lindex $ban 0]]
+        return
+      }
+    }
+  } elseif {[level $handle $chan] > "0" && [nickinfo $handle auth] && [nickinfo $handle userhost] == $uhost && ![suspend $handle $chan]} {
+    if {[aop $handle $chan]} {
+      pushmode $chan +o $nick
+    } elseif {[aov $handle $chan]} {
+      pushmode $chan +v $nick
+    }
+  }
+}
+
+bind raw - 303 {raw_error raw_303}
+proc raw_303 {server raw text} {
+  global notify botnick
+  unset notify
+  set notify([string tolower $botnick]) 1
+  foreach nick [lrange $text 2 end] {
+    set notify([string tolower $nick]) 1
+  }
+  if {![istimer notify_send]} {
+    timer 1 notify_send
+  }
+}
+
+
+
+
+

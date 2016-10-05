@@ -1,0 +1,81 @@
+###
+# Usage: /msg botnick clean [<channel>]
+###
+
+### CLEAN:
+bind msg - clean {msg_error msg_clean}
+bind pub - $set(cmd)clean {pub_error pub_clean}
+
+### CHANNEL:
+proc pub_clean {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_clean c $nick $uhost $handle $chan $text
+  }
+}
+
+### QUERY:
+proc msg_clean {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } else {
+    all_clean m $nick $uhost $handle [lindex $text 0] [lrange $text 1 end]
+  }
+}
+
+### MAIN:
+proc all_clean {type nick uhost handle chan text} {
+  global set botnick
+  chan_settings clean $type $nick $uhost $handle $chan $text
+  if {![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+    return
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } elseif {[string tolower $type] == "c" && [chaninfo $chan nochanmsg]} {
+    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) clean]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) clean] for this command"
+  } else {
+    msg $chan "Modes cleaned by $nick"
+    set cnt 1
+    foreach mode [split [lindex [getchanmode $chan] 0] ""] {
+      if {$mode == "+"} {
+        continue
+      } elseif {$mode == "k"} {
+        pushmode $chan -$mode [lindex [getchanmode $chan] $cnt]
+        incr cnt 1
+      } else {
+        if {$mode == "l"} {
+          incr cnt 1
+        }
+        pushmode $chan -$mode
+      }
+    }
+    flushmode $chan
+    if {[level $handle $chan] < [lindex [chaninfo $chan modelock] 0]} {
+      set cnt 2
+      set mp 0
+      set mm 0
+      foreach mode [split [lindex [chaninfo $chan modelock] 1] ""] {
+        if {$mode == "+"} {
+          set mp 1
+          set mm 0
+        } elseif {$mp} {
+          if {$mode == "l"} {
+            pushmode $chan +l [lindex [chaninfo $chan modelock] $cnt]
+            incr cnt 1
+          } elseif {$mode == "k"} {
+            pushmode $chan +k [lindex [chaninfo $chan modelock] $cnt]
+            incr cnt 1
+          } else {
+            pushmode $chan +$mode
+          }
+        }
+      }
+    }
+    putcmdlog "> !$handle! ($nick!$uhost) CLEAN\[$type\] ($chan)"
+  }
+}

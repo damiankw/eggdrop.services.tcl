@@ -1,0 +1,137 @@
+###
+# Usage: /msg botnick op [<channel>] [<nick1> <nick2> <nick3> ...]
+###
+
+### OP:
+bind msg - op {msg_error msg_op}
+bind pub - $set(cmd)op {pub_error pub_op}
+
+### CHANNEL:
+proc pub_op {nick uhost handle chan text} {
+  global set
+  chan_settings op c $nick $uhost $handle $chan $text
+  if {![validuser $handle] || ![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+    return
+  } elseif {[chaninfo $chan nochanmsg]} {
+    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) op]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) op] for this command"
+  } elseif {[lindex $text 0] == ""} {
+    pushmode $chan +o $nick
+    putcmdlog "> !$handle! ($nick!$uhost) OP\[c\] ($chan)"
+  } else {
+    if {[getallchaninfo $chan]} {
+      homechan "Could not locate settings file for $chan... writing"
+      addmainchan $chan
+      getallchaninfo $chan
+    }
+    set n ""
+    set no ""
+    foreach u $text {
+      if {![onchan $u $chan] || [isop $u $chan]} {
+        continue
+      } elseif {[string tolower $u] == [string tolower $nick]} {
+        pushmode $chan +o $u
+      } elseif {[chaninfo $chan oprestrict] == "0"} {
+        set n $n,$u
+        pushmode $chan +o $u
+      } elseif {[nick2hand $u] != ""} {
+        if {![suspend [nick2hand $u] $chan] && [nickinfo [nick2hand $u] auth] && [level [nick2hand $u] $chan] >= [chaninfo $chan oprestrict] && [nickinfo [nick2hand $u] userhost] == [getchanhost [nick2hand $u]]} {
+          set n $n,$u
+          pushmode $chan +o $u
+        } else {
+          set no "$no, $u"
+        } 
+      } else {
+        set no "$no, $u"
+      } 
+    }
+    notice $n $n "You were oped on $chan by $nick \[$handle\]"
+    if {$no != ""} {
+      notice $nick $handle "$chan is in OpRestrict mode, could not op these people: [string trimleft $no ", "]"
+    }
+    putcmdlog "> !$handle! ($nick!$uhost) OP\[c\] ($chan): $text"
+  }
+}
+
+### QUERY:
+proc msg_op {nick uhost handle text} {
+  global set
+  if {![validuser $handle]} {
+    return
+  } elseif {[isspecial $handle [lindex $text 1]] >= "100" && [level $handle [lindex $text 0]] == "0"} {
+    if {[lindex $text 0] == ""} {
+      notice $nick $handle "Invalid request: Wheres the password?"
+    } elseif {![passwdok $handle [lindex $text 0]]} {
+      notice $nick $handle "Password mismatch for $handle"
+      putcmdlog "> !$handle! ($nick!$uhost) failed OP \[opermode\]"
+    } elseif {[passwdok $handle [lindex $text 0]] && [lindex $text 1] != ""} {
+      chan_settings op m $nick $uhost $handle [lindex $text 1] "*** Used Operator Power"
+      pushmode [lindex $text 1] +o $nick
+      homechan "\[$handle\]($nick!$uhost): op'd themselves on [lindex $text 1] - opermode"
+      putcmdlog "> !$handle! ($nick!$uhost) OP\[m\] [lindex $text 1] \[opermode\]"
+    } elseif {[passwdok $handle [lindex $text 0]]} {
+      foreach channel [comchan $nick] {
+        if {[botisop $channel] && ![isop $nick $channel] && [ischanopchan $channel]} {
+          pushmode $channel +o $nick
+          chan_settings op m $nick $uhost $handle $channel "*** Used Operator Power"
+        }
+      }
+      homechan "\[$handle\]($nick!$uhost): op'd themselves on all channels - opermode"
+      putcmdlog "> !$handle! ($nick!$uhost): op'd themselves on all channels \[opermode\]"
+    } else {
+      putlog ">error ;op1; $nick $uhost $handle $text"
+    }
+  } elseif {[lindex $text 0] == ""} {
+    chan_settings op m $nick $uhost $handle [lindex $text 0] $text
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    chan_settings op m $nick $uhost $handle [lindex $text 0] $text
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } elseif {![validchan [lindex $text 0]]} {
+    chan_settings op m $nick $uhost $handle [lindex $text 0] $text
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a valid channel"
+  } elseif {![auth_check $nick $uhost $handle [lindex $text 0]] || [level $handle [lindex $text 0]] == "0"} {
+    chan_settings op m $nick $uhost $handle [lindex $text 0] $text
+    return
+  } elseif {[level $handle [lindex $text 0]] < [readfile $set(script.dir)/$set(com.file) op]} {
+    chan_settings op m $nick $uhost $handle [lindex $text 0] $text
+    notice $nick $handle "Your level of [level $handle [lindex $text 0]] is less then the required [readfile $set(script.dir)/$set(com.file) op] for this command"
+  } elseif {[lindex $text 1] == ""} {
+    chan_settings op m $nick $uhost $handle [lindex $text 0] $text
+    pushmode [lindex $text 0] +o $nick
+    putcmdlog "> !$handle! ($nick!$uhost) OP\[m\] ([lindex $text 0])"
+  } else {
+    chan_settings op m $nick $uhost $handle [lindex $text 0] $text
+    if {[getallchaninfo [lindex $text 0]]} {
+      homechan "Could not locate settings file for [lindex $text 0]... writing"
+      addmainchan [lindex $text 0]
+      getallchaninfo [lindex $text 0]
+      return
+    }
+    set n ""
+    set no ""
+    foreach u [lrange $text 1 end] {
+      if {![onchan $u [lindex $text 0]] || [isop $u [lindex $text 0]]} {
+        continue
+      } elseif {[string tolower $u] == [string tolower $nick]} {
+        pushmode [lindex $text 0] +o $u
+      } elseif {[chaninfo [lindex $text 0] oprestrict] > "0"} {
+        set n $n,$u
+        pushmode [lindex $text 0] +o $u
+      } elseif {[nick2hand $u] != ""} {
+        if {![suspend [nick2hand $u] [lindex $text 0]] && [nickinfo [nick2hand $u] auth] && [level [nick2hand $u] [lindex $text 0]] >= [chaninfo [lindex $text 0] oprestrict] && [nickinfo [nick2hand $u] userhost] == [getchanhost [nick2hand $u]]} {
+          set n $n,$u
+          pushmode [lindex $text 0] +o $u
+        } else {
+          set no "$no, $u"
+        } 
+      }
+    }
+    notice $n $n "You were oped on [lindex $text 0] by $nick \[$handle\]"
+    if {$no != ""} {
+      notice $nick $handle "[lindex $text 0] is in OpRestrict mode, could not op these people: [string trimleft $no ", "]"
+    }
+    putcmdlog "> !$handle! ($nick!$uhost) OP\[c\] ([lindex $text 0]): $text"
+  }
+}

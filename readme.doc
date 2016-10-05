@@ -1,0 +1,430 @@
+###########################################################################
+###       Services TCL v2.0 [Fri Jul 27 15:31:16 2001] 'Cyborg-'        ###
+####           damian@testikles.org http://www.tesikles.org            ####
+####                       The first of the new.                       ####
+ #########################################################################
+### Information [other information you may need to know]:              ###
+#### This readme file is basically to tell you about what you need to  ####
+#### set up before you actually use the TCL. This TCL isn't for the    ####
+#### users who know nothing about eggdrop, IRC or TCL, you must have   ####
+#### at least some knowledge of all three, or the set up process will  ####
+#### be difficult for you.                                             ####
+#### Over all the setup is simple, you edit a few files, add a few (if ####
+#### they arent already with the TCL) and then load it.                ####
+#### Hint: before looking through this readme, take a look through the ####
+#### 'conf.doc' file that came with this one and edit the              ####
+#### 'services.doc' file to change to your own settings, if you do it  ####
+#### before you have a glance through this one you will understand the ####
+#### files and settings in this much better.                           ####
+###                                                                     ###
+##                                                                       ##
+#                                                                         #
+             #################################################             
+             #               Files and Folders               #             
+             #################################################             
+
+The files and folders listed and written about below are there to make
+the Services TCL run better, run all together, or just anything, all files
+with the compressed file are accounted for. Some you may have to make,
+and/or edit, others are already how you should keep them. 
+Most of the files below can be found on the script website in the accessories
+part (if there is one) with the filename I have suggested, if it isn't ask
+me on IRC for it (irc.austnet.org - #Testikles`), my nickname is 'Cyborg-'
+or send me an Email asking for this file (and any others you may need)
+
+# The command list file.
+ - This is the file you set in your config file (set(com.file)). It refers
+   to the file that has all of the commands in it, along with the access
+   a user needs to be able to use it. I call my one of these 'com.settings'
+ 
+   The commands should be listed as follows:
+  -
+  command==level
+  command==level
+  - example;
+  ban==100
+  8ball==1
+  -
+   These are all the commands in the TCL to date, they should ALL be
+   accounted for. If they arent anyone can use the command.
+   8ball, access, adduser, ban, clean, commands, delme, deluser, deop
+   devoice, fun, info, invite, kick, listban, mdeop, mdevoice, mimic, op
+   resetdb, seek, set, setuser, topic, unban, voice
+
+# The topics file.
+ - This file is the one used for all of the random topics for the 'topic'
+   command. When you use the topic command without anything after (eg. 
+   +topic), it will choose a random line from this file to set as the
+   topic. If this file doesnt exist when you try and use the topic feature
+   without any parameters it will return '' (nothing) and set no topic.
+
+   I call this file 'topics.txt' because its got topics in it and its a
+   normal text file. Every new topic is put on a new line, here is an
+   example:
+  -
+  No dodgy subjects. Just ones outta the blue.
+  Our coffee is so good we even drink it ourselves, on occasion.
+  Press any key...no, no, no, NOT THAT ONE!
+  Press any key to continue or any other key to quit...
+  Press CTRL-ALT-DEL to continue....
+  -
+   Not a bad set of topics, a little lame tho.
+
+# The 8ball answer file.
+ - This file is the one used for all of the answers when you type +8ball
+   <question> (changing the '+' to your prefix..). Without this file the
+   script will always come up with '' (nothing) when you use the 8ball
+   feature.
+
+   I call this file '8ball.txt' for obvious reasons; the file is a normal
+   text file and it's for the 8ball. On every line in the text file you
+   put a different answer to the questions, here is an example:
+  -
+  Yes.
+  No.
+  Are you kidding?
+  What do you think I am, and 8ball?
+  -
+   Simple yet effective answers if I do say so myself.
+
+# The quickban file.
+ - This is the file used for the ban command. The syntax of ban is as
+   follows:
+  -
+  +ban <nickname|hostname> [<-nokick> <-kickall> <-noexpire> <-sticky>
+  <-level level> <-banmask u|h|nu|uh|nh|nuh> <-days N> <-hours N>
+  <-mins N> <-quick option>]
+
+  Your right! There are a hell of a lot of options, but they all serv
+  a purpose, below is the commands documentation on the commands.
+  -
+   In all those options there is one called '-quick' which is the
+   'quickban' option. The quickban file contains all of the messages
+   available in this, and it is set out as follows:
+  -
+  option==reason
+  option==reason
+  - example;
+  ooga=ooga booga to you!
+  virus=You have a virus, please join #AvA for assistance.
+  -
+   This file is located in the script directory, and on mine it is called
+   'quickban.ssf' (.stf being services setting file).
+
+# The conf.doc file.
+ - As you may know, the conf.doc file is a document containing all you
+   need to know about setting up your eggdrops configuration file and
+   the 'services.conf' file included with this TCL. Read through it all,
+   and try not to miss anything out, it could leave you wondering why
+   your bot isn't doing what one of your mates is :)
+
+# The services.conf file.
+ - The services.conf file is the single most important file of the whole
+   TCL. It is the file that makes it easy for anyone to load this TCL, all
+   you need to do is edit it and run basically, simple. More information
+   on this file can be read about in the 'conf.doc' file with this archive.
+
+# The script files.
+ - In this version of Services TCL there are thirty-two files containing
+   different parts of the scripts. Most are the commands, which are most
+   of the .etcl files (8ball, access, addme, adduser, auth, ban, clean,
+   clist, commands, delme, deluser, deop, devoice, fun, info, invite,
+   kick, listban, mdeop, mdevoice, mimic, op, resetdb, seek, set, setuser,
+   topic, unban, voice). The other three are the main heart-and-soul of
+   the TCL. 'main.etcl' is for all the different server things; join, part, 
+   quit, mode, topic, nick, kick and a little bit on other things like the
+   startup shit. 'procedures.etcl' is full of the smaller procedures that
+   make up the script, from the 'check_settings' procedure (checks main
+   settings and crap) to the 'isnum' procedure (tells if a piece of text
+   is a number or not), this file has the usage and description of every
+   procedure in it. 'services.etcl' is full of the Services stuff from the
+   Networks Services like 'ChanOP', 'NickOP' and 'NoteOP', nothing very
+   interesting in there.
+
+# The data directory.
+ - This directory is where all of the channel settings and log files go
+   as well as the main script settings files. The directory must be
+   created BEFORE running the script or it will just stop as soon as the
+   bot starts or you load the 'services.conf' file.
+
+--
+
+             #################################################             
+             #             Must-know information             #             
+             #################################################             
+
+All of the information below is must-know stuff when using this TCL. Over
+time this will definately get larger and larger, so keep track with it.
+
+- If people dont read this its their fault. Before you can use this script
+  in any channels, you must add yourself. How do you do this? Use the
+  'addme' command. The usage of it is simple (/msg botnick addme password
+  channel), a better syntax and cripe is written below.
+
+- These Services will not work like normal services, they are connected to
+  a server via another server (the services server), which these services
+  DO NOT HAVE. Trying to connect them will just end in tragety. It's an
+  eggdrop, connect like you would any other client to IRC. I may remake
+  them in *proper* TCL so they can run, but until then who knows.
+
+- There are a few things I'm still working on that should have been in
+  this version of the script, they will definately be in the next one.
+  These things include; Report Log, user set to set their own commands.
+  Encourage me on IRC and tell me to get my ass working overtime, I want
+  to get this done, I just havent got the time at the moment, sorry.
+
+- All of the Services settings (for Channel service, Nickname service, Memo
+  service etc.) was made for AustNet Services which arent the same as all
+  services.. they are actually quite unique. So what I'm saying is if you
+  arent on AustNet most/all of these probably wont work, give them all a
+  try though.
+
+- Before ripping the shit out of this script consult me, it's a bitch when
+  you see all of your scripts being used in other scripts and the people
+  are calling them their own, and/or didnt even let you know about the
+  script in the first place. If I see anyone doing this I will take the
+  script down from the website and not make it for anyone but myself and
+  the channels I run and maintain. It's up to you if you want to see more
+  versions coming out :)
+
+- If you find a loophole in what I just said, and it sounds ANYTHING like
+  what I just wrote, it means EXACTLY the same thing so do it and the end
+  result will be the same.
+
+- All of the scripts and documentation should go together in one archive,
+  if they are seperated the people trying to load/use the script will
+  probably get it all wrong, and we dont want anyone stuffing up too much
+  on an easy-to-use TCL like this do we? :)
+
+- In this version of Services the 'socket commands' arent added, I did this
+  because I'm trying to find one small thing about Linux that I dont know,
+  that is how to make this;
+   ./command parameters
+  accept more then three or four parameters without fucking itself. If you
+  can help me with this, please Email/message me or something, I need help!
+  If I still cant find this by the next version then I will release it with
+  a dodgy version of the Linux authentication and shit that hasnt really
+  got any other commands in it :(
+
+- The 'NoteOP' I havent made yet, so bare with me, I will eventually make
+  two versions, one for Windows that uses the built in note system on
+  eggdrop, and another for Linux/Unix.. that uses my own files and stuff
+  for the note storage. All you will need to do is load it when you load
+  the rest of the Services and it will addapt itself, maybe in future
+  versions of the rest of the versions I will add both and you choose
+  which one you want to use, not sure how she will work.
+
+- The settings files can get stuffed up sometimes when it writes stuff to
+  them, it writes a whole heap of junk down the bottom that I dont know
+  how to get rid of without writing another file (which wont make it
+  Windows compat), so I have decided to leave it. If you know the solution
+  to this, Email/message once again with how, thanks. This will in no way
+  make any of the settings be wrong, it just adds a little something to
+  the end of the file.
+
+- There was going to be a 'VoteOP' system on this script, but it seems I
+  havent really had time to complete it, it will be on the website ASAP,
+  but until then you will have to SUFFER!
+
+- If you find any bugs in the script or you think anything should be changed
+  (this includes spelling mistakes and things) gimme a yell on AustNet or
+  by Email, I would muchly appreciate it.
+
+--
+
+             #################################################             
+             #         Commands and extra information        #             
+             #################################################             
+
+This bit of information shows all of the channel/query/partyline commands,
+how they are used, what they do, any additional information you may want to
+know, and if they have options (-option) what the option means.
+This is how they all look:
+-
+# <command>: - <syntax>
+             - <syntax>
+    * <-option> -> <explination>
+  - <what its used for>
+  * <additional information>
+-
+
+The syntax for all commands is located in the <command>.etcl file too. If the
+command is '+command ..' with only the '+' at the front, it means it can only
+be used in the channel. If it is /msg then it can be used in query, if there
+is a '[<channel>]' after the command, it can also be used in the channel. If
+the command is prefixed with a '.' then it is to be used in the partyline.
+
+# 8ball:    - +8ball <question>
+  - Just like a Magic 8ball
+
+# Access:   - /msg botnick access [<channel>] [<wildcard match> <-online> <-userhost> <-lm> <-ls> <-host match> <-min level> <-max level>]
+            - .access <#channel> [<wildcard match> <-online> <-userhost> <-lm> <-ls> <-host match> <-min level> <-max level>]
+    * -online -> Displays if the user is online or offline
+    * -userhost -> Displays a users userhost (identd@domain.com)
+    * -lm -> Displays who last modified the user, and when it happened
+    * -ls -> Displays when the user was last seen
+    * -host <match> -> Matches the 'match' against the users userhost (identd@domain.com)
+    * -min <level> -> Displays only users who have access above and equal to 'level'
+    * -max <level> -> Displays only users who have access below and equal to 'level'
+  - The access list of a channel database
+  * The access command also shows if a user is suspended or not, with all information associated
+
+# Addme:    - addme <password> <channel>
+  - Add yourself to a channel (needed at startup)
+  * The password in this is the 'set(adminpass)' you set in the configuration file
+
+# Adduser:  - /msg botnick adduser [<channel>] <nickname> [<level> <-userhost host> <-aop on/off> <-aov 1/0> <-protect yes/on>
+    * -userhost <host> -> Sets/adds this host as the users if they havent been added it sets as their only
+    * -aop <..> -> Sets the AOP for the user on/off (1, on, yes = On || 0, off, no = Off)
+    * -aov <..> -> Sets the AOV for the user on/off (1, on, yes = On || 0, off, no = Off)
+    * -protect <..> -> Sets the Protect for the user on/off (1, on, yes = On || 0, off, no = Off)
+  - Adds a user to the channel database
+  * Unlike AustNet Services, the AOP/AOV/Protect doesnt change depending on the value, it is set default to your 'set(autoadd)' in the configuration
+
+# Auth:     - /msg botnick auth <password>
+            - /msg botnick id <password>
+            - /msg botnick identify <password>
+  - Authenticate to the bot
+  * All three of these commands are exactly the same
+
+# Deauth:   - /msg botnick deauth <password>
+            - /msg botnick unid <password>
+            - /msg botnick unidentify <password>
+  - Deauthenticate to the bot
+  * All three of these commands are exactly the same
+
+# Ban:      - /msg botnick ban [<channel>] <nickname/banmask> [<-noexpire> <-nokick> <-kickall> <-sticky> <-level level> <-banmask u|h|nu|uh|nh|nuh> <-days N> <-hours N> <-mins N> <-quick option>]
+    * -noexpire -> Sets the ban to never expire
+    * -nokick -> Doesnt kick the nickname if you specify one
+    * -kickall -> Kicks all nicknames matching the banmask
+    * -sticky -> Creates a 'sticky ban', it wont be removed from the channel until it expires
+    * -level <level> -> Sets the ban so 'level' and higher levels can remove it, good for 200+ owners
+    * -banmask <u|h|nu|uh|nh|nuh> -> Sets the banmask to whichever you specify (n = nickname, u = user [identd], h = host [domain])
+    * -days <n> -> Sets the ban to expire in 'n' days
+    * -hours <n> -> Sets the ban to expire in 'n' hours
+    * -mins <n> -> Sets the ban to expire in 'n' minutes
+    * -quick <option> -> Chooses an option from the quickban file
+  - Bans a user or host in the channel you do it in
+  * The -days|-hours|-mins can be used together and will add up to the appropriate value
+
+# Clean:    - /msg botnick clean [<channel>]
+  - Cleans the channel modes from the channel, and sets the modelock modes back if you are under the required access level
+
+# Clist:    - /msg botnick clist <nickname> [<send to nickname>]
+  - Sends a nickname a Channel List (a list of all the channels they have access in), 'send to nickname' is the nickname you send to, it will send to you if you dont specify
+  * This command can only be used by 'special users'
+
+# Command:  - /msg botnick command [<channel>]
+  - Lets you check what commands you can use in the channel
+
+# Delme:    - /msg botnick delme [<channel>]
+  - Deletes your own access in a channel
+
+# Deluser:  - /msg botnick deluser [<channel>] <nick1> [<nick2> <nick3> ..]
+  - Deletes one or more users access in the channel
+
+# Deop:     - /msg botnick deop [<channel>] [<nick1> <nick2> <nick3> ..]
+  - Deops you or another user in the channel
+  * If you dont specify anything after 'deop' it will deop you
+
+# Devoice:  - /msg botnick devoice [<channel>] [<nick1> <nick2> <nick3> ...]
+  - Devoices you or another user in the channel
+  * If you dont specify anything after 'devoice' it will devoice you
+
+# Fun:      - +fun <cleanoffice|milk|milo|squish|lamebot|opers|coffee|time|bonk|lix|moo|chocolate|icecream|droolz|shagz|d0nk|slobbers|bash> [<nickname>]
+  - Just a small joke, try out the different options (cleanoffice, milk, milo etc.) to see what they do :)
+
+# Info:     - /msg botnick info <nickname/channel>
+  - Get the information of a 'ChanOP' channel or nickname that is on the Services TCL
+  * Unlike other commands this can be used in the channel or query
+
+# Invite:   - /msg botnick invite <channel>
+  - Invites you to a channel, you cannot use this to invite others
+
+# Kick:     - /msg botnick kick [<channel>] <nickname> [<message>]
+  - Kicks a user the channel, with a message
+
+# Listban:  - /msg botnick listban [<channel>] [<wildcard match> <-whoset> <-whenset> <-lastactive> <-reason> <-min N> <-max N>]
+            - .listban <channel> [<wildcard match> <-whoset> <-whenset> <-lastactive> <-reason> <-min N> <-max N>]
+    * -whoset -> Displays who set the ban
+    * -whenset -> Displays when the ban was set
+    * -lastactive -> Displays when the ban was last activated (this isnt very accurate..)
+    * -reason -> Displays the reason why the banmask was banned
+    * -min <n> -> Only displays bans that were set by someone with access over and the same as 'n'
+    * -max <n> -> Only displays bans that were set by someone with access under and the same as 'n'
+  - Shows the list of bans current in the settings of the script for that channel
+  * If the banlist user has been deleted the reasons may be wrong
+
+# Mdeop:    - /msg botnick mdeop [<channel>]
+  - Deops everyone in the channel apart from itself
+
+# Mdevoice: - /msg botnick mdevoice [<channel>]
+  - Devoices everyone in the channel
+
+# Mimic:    - +mimic <nickname>
+  - Says a silly quote that mimics the nickname
+  * This only mimics a few people at the moment, I will make it so you can make your own :)
+
+# Op:       - /msg botnick op [<channel>] [<nick1> <nick2> <nick3> ...]
+  - Ops you or another user in the channel
+  * If you dont specify anything after 'op' it will op you
+
+# Resetdb:  - /msg botnick resetdb [<channel>] [<level>]
+  - Resets the channel user database, if you specify a level it will only delete below that
+  * Be careful with this, you could remove yourself :P
+
+# Seek:     - /msg botnick seek [<channel>] [<-online>] <message>
+    * -online -> Sends a list of people who are online in the channel to you without letting others know
+  - Sends a message to everyone who is online in the channel saying the 'message'
+  * If the 'nonote' is higher then your access in the channel, this wont send any messages to others
+
+# Set:      - /msg botnick set [<channel>] <keeptopic|mode|nonote|oprestrict|restrict|mustid|tellpeak|tellset|telladd|telldel|nochanmsg|funmsg|url|log|owner|address> <newvalue>
+    * keeptopic -> The topic lock level
+    * mode -> The modelock feature (this is used like; set mode <level> <-mo+de-s>)
+    * nonote -> Restrict channel notes (Memo's, seeks)
+    * oprestrict -> Restrict the people who are opd (this is used like; set oprestrict <level>) -- I have kept on/off in there for people who dont read this
+    * restrict -> Restrict the people who join the channel
+    * mustid -> When the bot is opd it will auto-auth (kinda) people who are op'd, deop'd in the channel (security relies on the same as the normal auth features)
+    * tellpeak -> Message the channel when the peak breaks
+    * tellset -> Notifies the owner(s) when someone uses set (not working yet)
+    * telladd -> Notifies the owner(s) when someone uses adduser (not working yet)
+    * telldel -> Notifies the owner(s) when someone uses deluser (not working yet)
+    * tellsetu -> Notifies the owner(s) when someone uses setuser (not working yet)
+    * nochanmsg -> Makes the channel users have to use /msg commands instead of +commands
+    * funmsg -> Turns fun messages on (similar to ChanOP on AustNet but turns +8ball, +fun and +mimic on)
+    * url -> Changes the channel URL
+    * log -> Only 200+ accessed users can use this, it sets the report log on and off (not working yet)
+    * owner -> Sets the channel owner(s) (seperate each by a space)
+    * address -> Sets the channel address (shown in info)
+    * quota -> Sets the quota on the channel (set to '0' for unlimited)
+    * banquota -> Sets the ban quota on the channel (set to '0' for unlimited)
+  - Change the main settings of each individual channel
+  * In the next version of Services all of these settings will be working, and more *should* be added
+
+# Setuser:  - /msg botnick setuser [<channel>] <nickname> <level|aop|aov|protect|suspend|nickname> <new value>
+  - Changes the settings of a user (nickname is the nickname in ALL channels)
+  * You must have more access then the user you are settings unless you are 'special'
+
+# Topic:    - /msg botnick topic [<channel>] [<topic>]
+  - Changes the topic in the channel to whatever you want
+
+# Unban:    - /msg botnick unban [<channel>] <nickname|hostname|all|perms|sticky|me>
+    * all -> Unbans all bans in the channel that arent sticky/perminant
+    * perms -> Unbans all bans in the channel that are perminant
+    * sticky -> Unbans all bans in the channel that are sticky
+    * me -> Unbans all bans in the channel that match your current address
+  - Unbans addresses in the channel
+
+# Voice:    - /msg botnick voice [<channel>] [<nick1> <nick2> <nick3> ..]
+  - Voices you or another user in the channel
+  * If you dont specify anything after 'voice' it will voice you
+
+
+--
+
+If there is anything else you want to know about the script, or anything else
+that I know or should know, Email me or message me on IRC (irc.austnet.org)
+my nickname is usually 'Cyborg-' NoteOP me or something if I aint there. The
+channel I'm ALWAYS in is #Testikles` so drop in and cause a riot!
+
+- damian [2001]

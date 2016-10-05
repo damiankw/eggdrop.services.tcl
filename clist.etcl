@@ -1,0 +1,58 @@
+###
+# Usage: /msg botnick clist <nickname> [<send to nickname>]
+###
+
+### CLIST:
+bind msg - clist {msg_error msg_clist}
+
+### CHANNEL:
+proc pub_clist {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_clist c $nick $uhost $handle $chan $text
+  }
+}
+    
+### QUERY:
+proc msg_clist {nick uhost handle text} {
+  global set botnick
+  if {![auth_check $nick $uhost $handle ""] || [isspecial $handle all] == "0"} {
+    return
+  } elseif {[isspecial $handle all] < "200"} {
+    notice $nick $handle "Your 'special' level of [isspecial $handle all] is less then the required 200 (+m) for this command"
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Who's Channel List do you want to recieve?"
+  } elseif {[getchannelaccess [lindex $text 0]] == ""} {
+    notice $nick $handle "[lindex $text 0] isn't a valid nickname. They either do not exist or have no access anywhere."
+  } else {
+    set match [lindex $text 0]
+    if {[lindex $text 1] == ""} {
+      set sendnick $nick
+      set sendhandle $handle
+    } else {
+      set sendnick [lindex $text 1]
+      set sendhandle [nick2hand [lindex $text 1]]
+    }
+    notice $nick $handle "Sending channel listing for $match to $sendnick ($sendhandle)"
+    notice $sendnick $sendhandle "You requested a listing of channels that '$match' has access in. '$nick' ($handle) has requested I send you this information."
+    notice $sendnick $sendhandle "      Channel                        Level  AOP  AOV  Prot Status"
+    set cnt 1
+    set cnter 0
+    foreach chan [getchannelaccess $match] {
+      set level [lindex $chan 1]
+      set aop [lindex $chan 2]
+      set aov [lindex $chan 3]
+      set prot [lindex $chan 4]
+      set chan [lindex $chan 0]
+      if {[ischanopchan $chan]} {
+        set status \[active\]
+      } else {
+        set status \[inactive\]
+      }
+      notice $sendnick $sendhandle "[align $cnt 5 " " L] [align [chaninfo $chan channel] 30 " " L]  [align $level 5 " " L] [align [change $aop yesno] 4 " " L] [align [change $aov yesno] 4 " " L] [align [change $prot yesno] 5 " " L] $status"
+      incr cnt 1
+      incr cnter [llength [access $chan 1]]
+    }
+    notice $sendnick $sendhandle "Found [expr $cnt - 1] matches out of $cnter database entries scanned for $match"
+    putcmdlog "> !$handle! ($nick!$uhost) CLIST $match \[[expr $cnt - 1]/$cnter\]"
+  }
+}

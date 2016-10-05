@@ -1,0 +1,106 @@
+###
+# Usage: /msg botnick setuser [<channel>] <nickname> <level|aop|aov|protect|suspend|nickname> <new value>
+###
+
+### SETUSER:
+bind msg - setuser {msg_error msg_setuser}
+bind pub - $set(cmd)setuser {pub_error pub_setuser}
+
+### CHANNEL:
+proc pub_setuser {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_setuser c $nick $uhost $handle $chan $text
+  }
+}
+
+### QUERY:
+proc msg_setuser {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } else {
+    all_setuser m $nick $uhost $handle [lindex $text 0] [lrange $text 1 end]
+  }
+}
+
+### MAIN:
+proc all_setuser {type nick uhost handle chan text} {
+  global set botnick
+  chan_settings setuser $type $nick $uhost $handle $chan $text
+  if {![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+    return
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } elseif {[string tolower $type] == "c" && [chaninfo $chan nochanmsg]} {
+    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) setuser]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) setuser] for this command"
+  } elseif {$text == ""} {
+    notice $nick $handle "Invalid request: No nick specified"
+  } elseif {[lindex $text 2] == ""} {
+    notice $nick $handle "Invalid request: Not enough arguments"
+  } elseif {[level [lindex $text 0] $chan] == "0"} {
+    notice $nick $handle "[lindex $text 0] is not currently in the $chan database"
+  } else {
+    set nickname [lindex $text 0]
+    set command [string tolower [lindex $text 1]]
+    set value [lindex $text 2]
+    if {$command == "level" && [level $handle $chan] <= [level $nickname $chan] && [isspecial $handle all] == "0"} {
+      notice $nick $handle "$nickname's level of [level $nickname $chan] in $chan is currently higher than or equal to your level of [level $handle $chan]"
+    } elseif {$command == "level" && ![isnum $value]} {
+      notice $nick $handle "Invalid request: $value"
+    } elseif {$command == "level" && ($value > "199" || $value < "1") && [isspecial $handle all] == "0"} {
+      notice $nick $handle "Invalid request: Valid levels are between 1 and 199"
+    } elseif {$command == "level" && ($value > "200" || $value < "1")} {
+      notice $nick $handle "Invalid request: Valid levels are between 1 and 200"
+    } elseif {$command == "level"} {
+      notice $nick $handle "Level for $nickname on $chan has been set to '$value from [level $nickname $chan]'"
+      setuser $nickname XTRA LEVEL($chan) $value
+      setuser $nickname XTRA LASTMOD($chan) "[unixtime] $handle $nick!$uhost"
+    } elseif {$command == "aop" && [level $handle $chan] <= [level $nickname $chan] && [string tolower $handle] != [string tolower $nickname]} {
+      notice $nick $handle "$nickname's level of [level $nickname $chan] in $chan is currently higher than or equal to your level of [level $handle $chan]"
+    } elseif {$command == "aop" && ([string tolower $value] == "on" || [string tolower $value] == "off")} {
+      notice $nick $handle "AutoOP for $nickname on $chan has been set to '[string tolower $value]'"
+      setuser $nickname XTRA AOP($chan) [change $value 10]
+      setuser $nickname XTRA LASTMOD($chan) "[unixtime] $handle $nick!$uhost"
+    } elseif {$command == "aov" && [level $handle $chan] <= [level $nickname $chan] && [string tolower $handle] != [string tolower $nickname]} {
+      notice $nick $handle "$nickname's level of [level $nickname $chan] in $chan is currently higher than or equal to your level of [level $handle $chan]"
+    } elseif {$command == "aov" && ([string tolower $value] == "on" || [string tolower $value] == "off")} {
+      notice $nick $handle "AutoVoice for $nickname on $chan has been set to '[string tolower $value]'"
+      setuser $nickname XTRA AOV($chan) [change $value 10]
+      setuser $nickname XTRA LASTMOD($chan) "[unixtime] $handle $nick!$uhost"
+    } elseif {($command == "prot" || $command == "protect") && [level $handle $chan] <= [level $nickname $chan] && [string tolower $handle] != [string tolower $nickname]} {
+      notice $nick $handle "$nickname's level of [level $nickname $chan] in $chan is currently higher than or equal to your level of [level $handle $chan]"
+    } elseif {($command == "prot" || $command == "protect") && ([string tolower $value] == "on" || [string tolower $value] == "off")} {
+      notice $nick $handle "Protect for $nickname on $chan has been set to '[string tolower $value]'"
+      setuser $nickname XTRA PROTECT($chan) [change $value 10]
+      setuser $nickname XTRA LASTMOD($chan) "[unixtime] $handle $nick!$uhost"
+    } elseif {$command == "nickname" && [isspecial $handle all] == "0"} {
+      notice $nick $handle "Invalid request: Only 'special' users can change nicknames."
+    } elseif {$command == "nickname"} {
+      notice $nick $handle "NickName for $nickname has been changed to '$value'"
+      homechan "\[$handle\]($nick!$uhost): changed the nickname of '$nickname' to '$value'."
+      chnick $nickname $value
+    } elseif {$command == "suspend" && [level $nickname $chan] >= [level $handle $chan]} {
+      notice $nick $handle "$nickname's level of [level $nickname $chan] in $chan is currently higher than or equal to your level of [level $handle $chan]"
+    } elseif {$command == "suspend" && ([string tolower $value] == "off" || [string tolower $value] == "0")} {
+      -suspend $chan $nickname
+      notice $nick $handle "Suspend for $nickname on $chan has been set to 'off'"
+    } elseif {$command == "suspend" && [isnum $value]} {
+      if {[lindex $text 3] == ""} {
+        set reason "No reason entered"
+      } else {
+        set reason [lrange $text 3 end]
+      }
+      +suspend $chan $nickname [expr $value * 60] $reason
+      setuser $nickname XTRA LASTMOD($chan) "[unixtime] $handle $nick!$uhost"
+      notice $nick $handle "Suspend for $nickname on $chan has been set to '$value minutes'"
+    } else {
+      notice $nick $handle "Invalid request: $command"
+    }
+    putcmdlog "> !$handle! ($nick!$uhost) SETUSER\[$type\] ($chan): $text"
+  }
+}

@@ -1,0 +1,110 @@
+###
+# Usage: +fun <cleanoffice|milk|milo|squish|lamebot|opers|coffee|time|bonk|lix|moo|chocolate|icecream|droolz|shagz|d0nk|slobbers|bash> [<nickname>]
+###
+
+### FUN:
+bind pub - $set(cmd)fun {pub_error pub_fun}
+
+### CHANNEL:
+proc pub_fun {nick uhost handle chan text} {
+  global set botnick
+  chan_settings fun c $nick $uhost $handle $chan $text
+  if {![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+    return
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } elseif {[chaninfo $chan nochanmsg]} {
+    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) fun]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) fun] for this command"
+  } elseif {![chaninfo $chan funmsg]} {
+    notice $nick $handle "Fun messages are currently turned off in $chan"
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: What are you asking me? :)"
+  } else {
+    set command [string tolower [lindex $text 0]]
+    if {$command == "cleanoffice"} {
+      msg $chan "Nick off $nick you lazy loser, do it ya self"
+    } elseif {$command == "milk" && [lindex $text 1] == ""} {
+      msg $chan "ACTION pours $nick a long glass of milk. huhuhuhuhu milk"
+    } elseif {$command == "milk" && [lindex $text 1] != ""} {
+      msg $chan "ACTION pours [lindex $text 1] a long glass of milk. huhuhuhuhu milk"
+    } elseif {$command == "milo"} {
+      msg $chan "ACTION decides hot milo made with milk and marshmellows sounds great"
+    } elseif {$command == "squish" && [lindex $text 1] == ""} {
+      msg $chan "OK who wants one?????"
+      msg $chan "aren't ya glad you have a clever bot ;)"
+      msg $chan "ACTION squishes damian"
+    } elseif {$command == "squish"} {
+      msg $chan "OK who wants one?????"
+      msg $chan "aren't ya glad you have a clever bot ;)"
+      msg $chan "ACTION squishes [lindex $text 1]"
+    } elseif {$command == "lamebot"} {
+      msg $chan "fine! if ya gonna have that attitude, cya!"
+      msg $chan "ACTION Parts $chan (find someone else to do ya dirty werk!)"
+      msg $chan "ACTION Joins $chan"
+      msg $chan "ok ok ok... i'll give ya's a second chance ;)"
+    } elseif {$command == "opers"} {
+      msg $chan "Oh zoiks!! where?!! I'm hiding!"
+      msg $chan "ACTION Parts $chan"
+      msg $chan "ACTION joins $chan"
+      msg $chan "have they gone yet?"
+    } elseif {$command == "coffee" && [lindex $text 1] == ""} {
+      msg $chan "ACTION hands damian a steaming cup of coffee"
+      msg $chan "ACTION wonders if anyone else wants one?"
+      msg $chan "you really think us bots are useless? ;)"
+    } elseif {$command == "coffee" && [lindex $text 1] != ""} {
+      msg $chan "ACTION hands [lindex $text 1] a steaming cup of coffee"
+      msg $chan "ACTION wonders if anyone else wants one?"
+      msg $chan "you really think us bots are useless? ;)"
+    } elseif {$command == "time"} {
+      msg $chan "guess what time it is guys!"
+      puthelp "TOPIC $chan :Its party time"
+      msg $chan "and you say bots are useless... geeezzz"
+    } elseif {$command == "bonk" && [lindex $text 1] == ""} {
+      msg $chan "ACTION wonders if damian is bonkable?!?"
+    } elseif {$command == "bonk" && [lindex $text 1] != ""} {
+      msg $chan "ACTION wonders if [lindex $text 1] is bonkable?!?"
+    } elseif {$command == "lix" && [lindex $text 1] == ""} {
+      msg $chan "ACTION lix damian :P~"
+    } elseif {$command == "lix" && [lindex $text 1] != ""} {
+      msg $chan "ACTION lix [lindex $text 1] :P~"
+    } elseif {$command == "moo" && [lindex $text 1] == ""} {
+      msg $chan "ACTION gives damian some deep insight and understanding: moo moo cows moo"
+      msg $chan "phear the cows"
+    } elseif {$command == "moo" && [lindex $text 1] != ""} {
+      msg $chan "ACTION gives [lindex $text 1] some deep insight and understanding: moo moo cows moo"
+      msg $chan "phear the cows"
+    } elseif {$command == "chocolate" && [lindex $text 1] == ""} {
+      msg $chan "ACTION chocklifies damian... yuummm"
+    } elseif {$command == "chocolate" && [lindex $text 1] != ""} {
+      msg $chan "ACTION chocklifies [lindex $text 1]... yuummm"
+    } elseif {$command == "icecream" && [lindex $text 1] == ""} {
+      msg $chan "ACTION dollops icecream on damian... sllurrrppp"
+    } elseif {$command == "icecream" && [lindex $text 1] != ""} {
+      msg $chan "ACTION dollops icecream on [lindex $text 1]... sllurrrppp"
+    } elseif {$command == "droolz" && [lindex $text 1] == ""} {
+      msg $chan "ACTION drooollzz on damian :P~~~~~~~"
+    } elseif {$command == "droolz" && [lindex $text 1] != ""} {
+      msg $chan "ACTION drooollzz on [lindex $text 1] :P~~~~~~~"
+    } elseif {$command == "shagz" && [lindex $text 1] == ""} {
+      msg $chan "ACTION shagz damian"
+    } elseif {$command == "shagz" && [lindex $text 1] != ""} {
+      msg $chan "ACTION shagz [lindex $text 1]"
+    } elseif {$command == "d0nk" && [lindex $text 1] == ""} {
+      msg $chan "ACTION d0nkz damian ;)"
+    } elseif {$command == "d0nk" && [lindex $text 1] != ""} {
+      msg $chan "ACTION d0nkz [lindex $text 1] ;)"
+    } elseif {$command == "slobbers" && [lindex $text 1] == ""} {
+      msg $chan "ACTION slobbers damian :)~~~~~"
+    } elseif {$command == "slobbers" && [lindex $text 1] != ""} {
+      msg $chan "ACTION slobbers [lindex $text 1] :)~~~~~"
+    } elseif {$command == "bash" && [lindex $text 1] == ""} {
+      msg $chan "ACTION beats the living shit out of $nick"
+    } elseif {$command == "bash" && [lindex $text 1] != ""} {
+      msg $chan "ACTION beats the living shit out of [lindex $text 1]"
+    } else {
+      notice $nick $handle "huh?? I don't understand '[lindex $text 0]'"
+    }
+  }
+}

@@ -1,0 +1,88 @@
+###
+# Usage: /msg botnick auth <password>
+# Usage: /msg botnick deauth <password>
+###
+
+### AUTH System
+bind msg - auth {msg_error msg_auth}
+bind msg - id {msg_error msg_auth}
+bind msg - identify {msg_error msg_auth}
+bind msg - deauth {msg_error msg_deauth}
+bind msg - unid {msg_error msg_deauth}
+bind msg - unidentify {msg_error msg_deauth}
+
+### DEAUTH:
+proc msg_deauth {nick uhost handle text} {
+  global set
+  chan_settings deauth - $nick $uhost $handle "" ""
+  if {$handle == "*" || ![getuser $handle xtra auth]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "You are not currently authenticated."
+  } elseif {![passwdok $handle [lindex $text 0]]} {
+    notice $nick $handle "Password mismatch for $handle"
+  } elseif {[passwdok $handle [lindex $text 0]]} {
+    notice $nick $handle "Password accepted -- Authentication for $handle removed"
+    setuser $handle XTRA AUTH 0
+    homechan "($nick!$uhost): successfully deauthenticated"
+    deauth_automode $nick $handle
+  } else {
+    putcmdlog "> error ;deauth\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+    notice $nick $handle "error ;deauth\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+  }
+}
+
+### AUTH:
+proc msg_auth {nick uhost handle text} {
+  global set
+  chan_settings auth - $nick $uhost $handle "" ""
+  if {$set(sockcommand)} {
+    notice $nick $handle "Incorrect procedure: You must authenticate via socket authentication."
+  } elseif {$handle == "*"} {
+    if {![validuser $nick]} {
+      notice $nick $handle "You do not have access to this command."
+      homechan "($nick!$uhost) tried to authenticate but does not have access"
+      putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[no access\]"
+    } elseif {[lindex $text 0] == ""} {
+      notice $nick $handle "You did not specify a password"
+      putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[nothing\]"
+    } elseif {![passwdok $nick [lindex $text 0]]} {
+      notice $nick $nick "Password mismatch for $nick"
+      homechan "($nick!$uhost): has no access and failed authentication as '$nick'"
+      putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[wrong password/no access\]"
+    } elseif {[passwdok $nick [lindex $text 0]] && [llength [getuser $nick HOSTS]] >= $set(maxhosts)} {
+      notice $nick $nick "Password Accepted -- Unfortunately you have no userhost slots left. Authentication failed"
+      homechan "($nick!$uhost): no handle and passed authentication, no userhost slots left - authentication failed"
+      putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[no userhost slots left\]"
+    } elseif {[passwdok $nick [lindex $text 0]]} {
+      notice $nick $nick "Password Accepted -- You have been authenticated as $nick \[userhosts updated\]"
+      homechan "($nick!$uhost): successfully authenticated as '$nick' and userhosts updated"
+      putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[passed/userhosts updated\]"
+      setuser $nick HOSTS [maskhost $nick!$uhost]
+      setuser $nick XTRA USERHOST $uhost
+      setuser $nick XTRA AUTH 1
+      auth_automode $nick $nick $uhost
+    } else {
+      putcmdlog "> error ;auth\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+      notice $nick $handle "error ;auth\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+    }
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "You did not specify a password"
+    putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[nothing\]"
+  } elseif {![passwdok $handle [lindex $text 0]]} {
+    notice $nick $handle "Password mismatch for $handle"
+    homechan "\[$handle\]($nick!$uhost): wrong password.. failed authentication"
+    putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[wrong password\]"
+  } elseif {[passwdok $handle [lindex $text 0]]} {
+    notice $nick $handle "Password Accepted -- You have been authenticated as $handle"
+    homechan "\[$handle\]($nick!$uhost): successfully authenticated"
+    putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[passed\]"
+    setuser $handle XTRA USERHOST $uhost
+    setuser $handle XTRA AUTH 1
+    setuser $handle XTRA LASTID [unixtime]
+    auth_automode $nick $handle $uhost
+  } else {
+    putcmdlog "> error ;auth\[2\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+    notice $nick $handle "error ;auth\[2\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+  }
+}

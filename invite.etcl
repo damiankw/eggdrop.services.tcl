@@ -1,0 +1,30 @@
+###
+# Usage: /msg botnick invite <channel>
+###
+
+### INVITE:
+bind msg - invite {msg_error msg_invite}
+
+### QUERY:
+proc msg_invite {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } elseif {![auth_check $nick $uhost $handle [lindex $text 0] || [level $handle [lindex $text 0]] == "0" || ![ischanopchan [lindex $text 0]]} {
+    return
+  } elseif {![validchan [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a valid channel"
+  } elseif {[level $handle [lindex $text 0]] < [readfile $set(script.dir)/$set(com.file) invite]} {
+    notice $nick $handle "Your level of [level $handle [lindex $text 0]] is less then the required [readfile $set(script.dir)/$set(com.file) invite] for this command"
+  } elseif {![botisop [lindex $text 0]]} {
+    notice $nick $handle "I am not currently an operator in $chan"
+  } elseif {[onchan $nick $chan]} {
+    notice $nick $handle "Invalid request: You may only invite yourself, and you must not be in the channel"
+  } else {
+    putquick "INVITE $chan $nick"
+    putcmdlog "> !$handle! ($nick!$uhost) INVITE [lindex $text 0]"
+  }
+}

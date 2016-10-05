@@ -1,0 +1,307 @@
+###
+# Usage: /msg botnick access [<channel>] [<wildcard match> <-online> <-userhost> <-lm> <-ls> <-host match> <-min level> <-max level>]
+# Usage: .access <#channel> [<wildcard match> <-online> <-userhost> <-lm> <-ls> <-host match> <-min level> <-max level>]
+###
+
+### ACCESS:
+bind msg - access {msg_error msg_access}
+bind pub - $set(cmd)access {pub_error pub_access}
+bind dcc - access {dcc_error dcc_access}
+
+### CHANNEL:
+proc pub_access {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_access c $nick $uhost $handle $chan $text
+  }
+}
+    
+### QUERY:
+proc msg_access {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } else {
+    all_access m $nick $uhost $handle [lindex $text 0] [lrange $text 1 end]
+  }
+}
+
+### MAIN:
+proc all_access {type nick uhost handle chan text} {
+  global set botnick
+  chan_settings access $type $nick $uhost $handle $chan $text
+  if {[level $handle $chan] == "0"} {
+    return
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } elseif {[string tolower $type] == "c" && [chaninfo $chan nochanmsg]} {
+    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) access]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) access] for this command"
+  } else {
+    if {$text == ""} {
+      set text "-check $nick"
+    }
+    set ma ""
+    set mn ""
+    set mx ""
+    set ho ""
+    set on 0
+    set uh 0
+    set lm 0
+    set ls 0
+    set cn 0
+    while {[lindex $text $cn] != ""} {
+      set w [string tolower [lindex $text $cn]]
+      set wd [string tolower [lindex $text [expr $cn + 1]]]
+      if {$w == "-lm"} {
+        set lm 1
+        incr cn 1
+      } elseif {$w == "-ls"} {
+        set ls 1
+        incr cn 1
+      } elseif {[letters $w 3 1] == "-us" && [string length $w] <= "9"} {
+        set uh 1
+        incr cn 1
+      } elseif {[letters $w 3 1] == "-on" && [string length $w] <= "7"} {
+        set on 1
+        incr cn 1
+      } elseif {[letters $w 3 1] == "-ho" && [string length $w] <= "5"} {
+        set ho $wd
+        incr cn 2
+      } elseif {[letters $w 3 1] == "-mi" && [string length $w] <= "4" && [isnum $wd]} {
+        set mn $wd
+        incr cn 2
+      } elseif {[letters $w 3 1] == "-ma" && [string length $w] <= "4" && [isnum $wd]} {
+        incr cn 2
+      } elseif {![string match -* $w]} {
+        set ma "$ma [lindex $text $cn]"
+        incr cn 1
+      } else {
+        incr cn 1
+      }
+    }
+    if {$ma != ""} {
+      set ma [lindex $ma 0]
+    } elseif {$ma == ""} {
+      set ma *
+    }
+    if {$mn > "200" || $mn < "0" || $mn == ""} {
+      set mn 0
+    }
+    if {$mx > "200" || $mx < "0" || $mx == ""} {
+      set mx 200
+    }
+    if {$ho == ""} {
+      set ho *
+    }
+    if {[string tolower [lindex $text 0]] == "-check" && [lindex $text 1] == ""} {
+      notice $nick $handle "Invalid request: Which online client?"
+      return
+    } elseif {[string tolower [lindex $text 0]] == "-check" && [getchanhost [lindex $text 1]] == ""} {
+      notice $nick $handle "I cannot tell if [lindex $text 1] is currently online"
+      return
+    } elseif {[string tolower [lindex $text 0]] == "-check"} {
+      set ma [nick2hand [lindex $text 1]]
+    }
+    if {[string tolower [lindex $text 0]] == "-check"} {
+      notice $nick $handle "*** Channel membership list for [lindex $text 1] on $chan ***"
+    } else {
+      notice $nick $handle "*** $chan Database \[Match(Nick: [lindex $ma 0] Userhost: $ho) Min: [align $mn 3 " " L] Max: [align $mx 3 " " L]\] ***"
+    }
+    notice $nick $handle "      NickName          Level  AOP   AOV   Prot"
+    if {[string tolower [lindex $text 0]] == "-check" && [level $ma $chan] > "0"} {
+      notice $nick $handle "1     [align $ma 17 " " L] [align [level $ma $chan] 6 " " L] [align [change [aop $ma $chan] yesno] 5 " " L] [align [change [aov $ma $chan] yesno] 5 " " L] [align [change [protect $ma $chan] yesno] 5 " " L]"
+      if {[suspend $handle $chan]} {
+        notice $nick $handle "Suspend Expires: [ctime [lindex [suspendinfo $chan $handle] 0]] $set(timezone)"
+        notice $nick $handle " Suspend Reason: [getuser $handle xtra suspendr($chan)]"
+      }
+    } elseif {[string tolower [lindex $text 0]] == "-check" && [level $ma $chan] == "0"} {
+      notice $nick $handle "[lindex $text 1] does not have access to $chan"
+    } else {
+      set cn 1
+      set mx 0
+      set er 0
+      foreach n [access $chan 1] {
+        if {[level $handle $chan] < [lindex [chaninfo $chan accessall] 0] && $cn > [lindex [chaninfo $chan accessall] 1] && $er} {
+          continue
+        } elseif {[level $handle $chan] < [lindex [chaninfo $chan accessall] 0] && $cn > [lindex [chaninfo $chan accessall] 1] && !$er} {
+          notice $nick $handle "Your level of [level $handle $chan] only enables you to list [lindex [chaninfo $chan accessall] 1] users"
+          set er 1
+        } elseif {[string match [string tolower $ma] [string tolower $n]] && [string match [string tolower $ho] [string tolower [nickinfo $n userhost]]]} {
+          if {$uh} {
+            set uha [nickinfo $n userhost]
+          } else {
+            set uha ""
+          }
+          if {$on && [notify $n]} {
+            set ona \[Online\]
+          } elseif {$on && ![notify $n]} {
+            set ona \[Offline\]
+          } else {
+            set ona ""
+          }
+          notice $nick $handle "[align $cn 5 " " L] [align $n 17 " " L] [align [level $n $chan] 6 " " L] [align [change [aop $n $chan] yesno] 5 " " L] [align [change [aov $n $chan] yesno] 5 " " L] [align [change [protect $n $chan] yesno] 5 " " L]$uha $ona"
+          if {[suspend $n $chan]} {
+            notice $nick $handle "Suspend Expires: [ctime [lindex [suspendinfo $chan $n] 0]] $set(timezone)"
+            notice $nick $handle " Suspend Reason: [getuser $n xtra suspendr($chan)]"
+          }
+          if {$ls} {
+            notice $nick $handle "  LS  [ctime [lastseen $n $chan]] $set(timezone)"
+          }
+          if {$lm} {
+            notice $nick $handle "  LM  \[[lindex [lastmod $n $chan] 1]\] [lindex [lastmod $n $chan] 2] ([ctime [lindex [lastmod $n $chan] 0]] $set(timezone))"
+          }
+          incr mx 1
+        }
+        incr cn 1
+      }
+      if {$mx == "0"} {
+        notice $nick $handle "There were no matches for your selected criteria"
+      }
+    }
+    notice $nick $handle "*** End of List ***"
+    putcmdlog "> !$handle! ($nick!$uhost) ACCESS\[$type\] ($chan): $text"
+  }
+}
+
+### DCC:
+proc dcc_access {handle idx text} {
+  global set botnick
+  if {$text == ""} {
+    putdcc $idx "> Usage: access <#channel> \[<wildcard match> <-host> <-userhost> <-lm> <-ls> <-min level> <-max level>\]"
+    return
+  }
+  set chan [lindex $text 0]
+  set text [lrange $text 1 end]
+  if {[lindex [lindex [findidx $idx] 4] 1] != "socket_command"} {
+    putcmdlog "> #$handle# ACCESS ($chan) $text"
+  } else {
+    putcmdlog "> #$handle ([lindex [replace [findidx $idx] @ " "] 3])# ACCESS ($chan) $text"
+  }
+  if {![validchan $chan]} {
+    putdcc $idx "> Invalid channel."
+  } else {
+    if {$text == "" && [hand2nick $handle] == ""} {
+      putdcc $idx "> Sorry, I cannot find you on IRC.. who are you?"
+      return
+    } elseif {$text == ""} {
+      set text "-check $handle"
+    }
+    set ma ""
+    set mn ""
+    set mx ""
+    set ho ""
+    set on 0
+    set uh 0
+    set lm 0
+    set ls 0
+    set cn 0
+    while {[lindex $text $cn] != ""} {
+      set w [string tolower [lindex $text $cn]]
+      set wd [string tolower [lindex $text [expr $cn + 1]]]
+      if {$w == "-lm"} {
+        set lm 1
+        incr cn 1
+      } elseif {$w == "-ls"} {
+        set ls 1
+        incr cn 1
+      } elseif {[letters $w 3 1] == "-us" && [string length $w] <= "9"} {
+        set uh 1
+        incr cn 1
+      } elseif {[letters $w 3 1] == "-on" && [string length $w] <= "7"} {
+        set on 1
+        incr cn 1
+      } elseif {[letters $w 3 1] == "-ho" && [string length $w] <= "5"} {
+        set ho $wd
+        incr cn 2
+      } elseif {[letters $w 3 1] == "-mi" && [string length $w] <= "4" && [isnum $wd]} {
+        set mn $wd
+        incr cn 2
+      } elseif {[letters $w 3 1] == "-ma" && [string length $w] <= "4" && [isnum $wd]} {
+        incr cn 2
+      } elseif {![string match -* $w]} {
+        set ma "$ma [lindex $text $cn]"
+        incr cn 1
+      } else {
+        incr cn 1
+      }
+    }
+    if {$ma != ""} {
+      set ma [lindex $ma 0]
+    } elseif {$ma == ""} {
+      set ma *
+    }
+    if {$mn > "200" || $mn < "0" || $mn == ""} {
+      set mn 0
+    }
+    if {$mx > "200" || $mx < "0" || $mx == ""} {
+      set mx 200
+    }
+    if {$ho == ""} {
+      set ho *
+    }
+    if {[string tolower [lindex $text 0]] == "-check" && [lindex $text 1] == ""} {
+      putdcc $idx "Invalid request: Which online client?"
+      return
+    } elseif {[string tolower [lindex $text 0]] == "-check" && [getchanhost [hand2nick [lindex $text 1]]] == ""} {
+      putdcc $idx "I cannot tell if [lindex $text 1] is currently online"
+      return
+    } elseif {[string tolower [lindex $text 0]] == "-check"} {
+      set ma [lindex $text 1]
+    }
+    if {[string tolower [lindex $text 0]] == "-check"} {
+      putdcc $idx "*** Channel membership list for [lindex $text 1] on $chan ***"
+    } else {
+      putdcc $idx "*** $chan Database \[Match(Nick: [lindex $ma 0] Userhost: $ho) Min: [align $mn 3 " " L] Max: [align $mx 3 " " L]\] ***"
+    }
+    putdcc $idx "      NickName          Level  AOP   AOV   Prot"
+    if {[string tolower [lindex $text 0]] == "-check" && [level $ma $chan] > "0"} {
+      putdcc $idx "1     [align $ma 17 " " L] [align [level $ma $chan] 6 " " L] [align [change [aop $ma $chan] yesno] 5 " " L] [align [change [aov $ma $chan] yesno] 5 " " L] [align [change [protect $ma $chan] yesno] 5 " " L]"
+      if {[suspend $handle $chan]} {
+        putdcc $idx "Suspend Expires: [ctime [lindex [suspendinfo $chan $handle] 0]] $set(timezone)"
+        putdcc $idx " Suspend Reason: [getuser $handle xtra suspendr($chan)]"
+      }
+    } elseif {[string tolower [lindex $text 0]] == "-check" && [level $ma $chan] == "0"} {
+      putdcc $idx "[lindex $text 1] does not have access to $chan"
+    } else {
+      set cn 1
+      set mx 0
+      foreach n [access $chan 1] {
+        if {[string match [string tolower $ma] [string tolower $n]] && [string match [string tolower $ho] [string tolower [nickinfo $n userhost]]]} {
+          if {$uh} {
+            set uha [nickinfo $n userhost]
+          } else {
+            set uha ""
+          }
+          if {$on && [notify $n]} {
+            set ona \[Online\]
+          } elseif {$on && ![notify $n]} {
+            set ona \[Offline\]
+          } else {
+            set ona ""
+          }
+          putdcc $idx "[align $cn 5 " " L] [align $n 17 " " L] [align [level $n $chan] 6 " " L] [align [change [aop $n $chan] yesno] 5 " " L] [align [change [aov $n $chan] yesno] 5 " " L] [align [change [protect $n $chan] yesno] 5 " " L]$uha $ona"
+          if {[suspend $n $chan]} {
+            putdcc $idx "Suspend Expires: [ctime [lindex [suspendinfo $chan $n] 0]] $set(timezone)"
+            putdcc $idx " Suspend Reason: [getuser $n xtra suspendr($chan)]"
+          }
+          if {$ls} {
+            putdcc $idx "  LS  [ctime [lastseen $n $chan]] $set(timezone)"
+          }
+          if {$lm} {
+            putdcc $idx "  LM  \[[lindex [lastmod $n $chan] 1]\] [lindex [lastmod $n $chan] 2] ([ctime [lindex [lastmod $n $chan] 0]] $set(timezone))"
+          }
+          incr mx 1
+        }
+        incr cn 1
+      }
+      if {$mx == "0"} {
+        putdcc $idx "There were no matches for your selected criteria"
+      }
+    }
+    putdcc $idx "*** End of List ***"
+  }
+}

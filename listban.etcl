@@ -1,0 +1,268 @@
+###
+# Usage: /msg botnick listban [<channel>] [<wildcard match> <-whoset> <-whenset> <-lastactive> <-reason> <-min N> <-max N>]
+# Usage: .listban <channel> [<wildcard match> <-whoset> <-whenset> <-lastactive> <-reason> <-min N> <-max N>]
+###
+
+### LISTBAN:
+bind msg - listban {msg_error msg_listban}
+bind pub - $set(cmd)listban {pub_error pub_listban}
+bind dcc - listban {dcc_error dcc_listban}
+
+### CHANNEL:
+proc pub_listban {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_listban c $nick $uhost $handle $chan $text
+  }
+}
+
+### QUERY:
+proc msg_listban {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } else {
+    all_listban m $nick $uhost $handle [lindex $text 0] [lrange $text 1 end]
+  }
+}
+
+### MAIN:
+proc all_listban {type nick uhost handle chan text} {
+  global set botnick
+  chan_settings listban $type $nick $uhost $handle $chan $text
+  if {![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+    return
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } elseif {[string tolower $type] == "c" && [chaninfo $chan nochanmsg]} {
+    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) listban]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) listban] for this command"
+  } else {
+    set ma ""
+    set la 0
+    set wo 0
+    set we 0
+    set re 0
+    set cn 0
+    set mn 0
+    set mx 200
+    while {[lindex $text $cn] != ""} {
+      set w [lindex $text $cn]
+      set wd [string tolower $w]
+      set w2 [lindex $text [expr $cn + 1]]
+      if {$wd == "-lastactive"} {
+        set la 1
+        incr cn 1
+      } elseif {$wd == "-whoset"} {
+        set wo 1
+        incr cn 1
+      } elseif {$wd == "-whenset"} {
+        set we 1
+        incr cn 1
+      } elseif {$wd == "-reason"} {
+        set re 1
+        incr cn 1
+      } elseif {$wd == "-min" && [isnum $w2]} {
+        set mn $w2
+        incr cn 2
+      } elseif {$wd == "-max" && [isnum $w2]} {
+        set mx $w2
+        incr cn 2
+      } elseif {[string match -* $w]} {
+        incr cn 1
+      } else {
+        set ma "$ma $w"
+        incr cn 1
+      }
+    }
+    if {$ma == ""} {
+      set ma *
+    } else {
+      set ma [lindex $ma 0]
+    }
+    if {$mx > "200" || $mx < "0"} {
+      set mx 200
+    }
+    if {$mn > "200" || $mn < "0"} {
+      set mn 0
+    }
+    set cn 0
+    set mt 0
+    notice $nick $handle "*** $chan Ban List (Matching $ma) \[Min: [align $mn 3 " " L] Max: [align $mx 3 " " L]\] ***"
+    notice $nick $handle "     Ban mask                            Level Expires      "
+    if {[llength [banlist $chan]] == "0"} {
+      set mt 1
+      notice $nick $handle "There are no permanent bans for this channel"
+    } else {
+      foreach ban [banlist $chan] {
+        if {$ma == "*" && $cn == "16"} {
+          continue
+        }
+        set b_mask [lindex $ban 0]
+        set b_lev [lindex [lindex $ban 1] 0]
+        incr cn 1
+        if {$b_lev > $mx || $b_lev < $mn || ![string match [string tolower $ma] [string tolower $b_mask]]} {
+          continue
+        }
+        set b_who "([lindex $ban 5]) [lindex [lindex $ban 1] 1]"
+        set b_when [lindex $ban 3]
+        set b_reas [getbanreason $chan $b_mask]
+        set b_last [lindex $ban 4]
+        if {$b_last == "0"} {
+          set b_last Never
+        } else {
+          set b_last "[ctime $b_last] $set(timezone)"
+        }
+        set b_exp [lindex $ban 2]
+        if {$b_exp == "0"} {
+          set b_exp Never
+        } else {
+          set b_exp "[ctime $b_exp] $set(timezone)"
+        }
+        notice $nick $handle "[align $cn 4 " " L] [align $b_mask 35 " " L] [align $b_lev 5 " " L] $b_exp"
+        if {$la} {
+          notice $nick $handle "LASTON $b_last"
+        }
+        if {$wo} {
+          notice $nick $handle " SETBY $b_who"
+        }
+        if {$re} {
+          notice $nick $handle "REASON $b_reas"
+        }
+        if {$we} {
+          notice $nick $handle " SETON [ctime $b_when] $set(timezone)"
+        }
+        set mt 1
+      }
+    }
+    if {!$mt} {
+      notice $nick $handle "No bans found matching $ma"
+    }
+    notice $nick $handle "*** End of banlist. Use switches -whoset -whenset -lastactive -reason for more information ***"
+    notice $nick $handle "*** End of List ***"
+    putcmdlog "> !$handle! ($nick!$uhost) LISTBAN\[$type\] ($chan) $text"
+  }
+}
+
+### DCC:
+proc dcc_listban {handle idx text} {
+  global set botnick
+  set chan [lindex $text 0]
+  set text [lrange $text 1 end]
+  if {[lindex [lindex [findidx $idx] 4] 1] != "socket_command"} {
+    putcmdlog "> #$handle# LISTBAN ($chan) $text"
+  } else {
+    putcmdlog "> #$handle ([lindex [replace [findidx $idx] @ " "] 3])# LISTBAN ($chan) $text"
+  }
+  if {![validchan $chan]} {
+    putdcc $idx "Invalid request: $chan is not a valid channel"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) listban]} {
+    putdcc $idx "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) listban] for this command"
+  } else {
+    set ma ""
+    set la 0
+    set wo 0
+    set we 0
+    set re 0
+    set cn 0
+    set mn 0
+    set mx 200
+    while {[lindex $text $cn] != ""} {
+      set w [lindex $text $cn]
+      set wd [string tolower $w]
+      set w2 [lindex $text [expr $cn + 1]]
+      if {$wd == "-lastactive"} {
+        set la 1
+        incr cn 1
+      } elseif {$wd == "-whoset"} {
+        set wo 1
+        incr cn 1
+      } elseif {$wd == "-whenset"} {
+        set we 1
+        incr cn 1
+      } elseif {$wd == "-reason"} {
+        set re 1
+        incr cn 1
+      } elseif {$wd == "-min" && [isnum $w2]} {
+        set mn $w2
+        incr cn 2
+      } elseif {$wd == "-max" && [isnum $w2]} {
+        set mx $w2
+        incr cn 2
+      } elseif {[string match -* $w]} {
+        incr cn 1
+      } else {
+        set ma "$ma $w"
+        incr cn 1
+      }
+    }
+    if {$ma == ""} {
+      set ma *
+    } else {
+      set ma [lindex $ma 0]
+    }
+    if {$mx > "200" || $mx < "0"} {
+      set mx 200
+    }
+    if {$mn > "200" || $mn < "0"} {
+      set mn 0
+    }
+    set cn 0
+    set mt 0
+    putdcc $idx "*** $chan Ban List (Matching $ma) \[Min: [align $mn 3 " " L] Max: [align $mx 3 " " L]\] ***"
+    putdcc $idx "     Ban mask                            Level Expires      "
+    if {[llength [banlist $chan]] == "0"} {
+      set mt 1
+      putdcc $idx "There are no permanent bans for this channel"
+    } else {
+      foreach ban [banlist $chan] {
+        if {$ma == "*" && $cn == "16"} {
+          continue
+        }
+        set b_mask [lindex $ban 0]
+        set b_lev [lindex [lindex $ban 1] 0]
+        incr cn 1
+        if {$b_lev > $mx || $b_lev < $mn || ![string match [string tolower $ma] [string tolower $b_mask]]} {
+          continue
+        }
+        set b_who "([lindex $ban 5]) [lindex [lindex $ban 1] 1]"
+        set b_when [lindex $ban 3]
+        set b_reas [getbanreason $chan $b_mask]
+        set b_last [lindex $ban 4]
+        if {$b_last == "0"} {
+          set b_last Never
+        } else {
+          set b_last "[ctime $b_last] $set(timezone)"
+        }
+        set b_exp [lindex $ban 2]
+        if {$b_exp == "0"} {
+          set b_exp Never
+        } else {
+          set b_exp "[ctime $b_exp] $set(timezone)"
+        }
+        putdcc $idx "[align $cn 4 " " L] [align $b_mask 35 " " L] [align $b_lev 5 " " L] $b_exp"
+        if {$la} {
+          putdcc $idx "LASTON $b_last"
+        }
+        if {$wo} {
+          putdcc $idx " SETBY $b_who"
+        }
+        if {$re} {
+          putdcc $idx "REASON $b_reas"
+        }
+        if {$we} {
+          putdcc $idx " SETON [ctime $b_when] $set(timezone)"
+        }
+        set mt 1
+      }
+    }
+    if {!$mt} {
+      putdcc $idx "No bans found matching $ma"
+    }
+    putdcc $idx "*** End of banlist. Use switches -whoset -whenset -lastactive -reason for more information ***"
+    putdcc $idx "*** End of List ***"
+  }
+}

@@ -1,0 +1,48 @@
+###
+# Usage: +8ball <question>
+###
+
+### 8BALL:
+bind msg - 8ball {msg_error msg_8ball}
+bind pub - $set(cmd)8ball {pub_error pub_8ball}
+
+### CHANNEL:
+proc pub_8ball {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_8ball c $nick $uhost $handle $chan $text
+  }
+}
+
+### QUERY:
+proc msg_8ball {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } else {
+    all_8ball m $nick $uhost $handle [lindex $text 0] [lrange $text 1 end]
+  }
+}
+
+### MAIN:
+proc all_8ball {type nick uhost handle chan text} {
+  global set botnick
+  chan_settings 8ball $type $nick $uhost $handle $chan $text
+  if {![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+    return
+  } elseif {[chaninfo $chan nochanmsg]} {
+    notice $nick $handle "$set(cmd)commands have been disabled for $chan"
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) 8ball]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) 8ball] for this command"
+  } elseif {![chaninfo $chan funmsg]} {
+    notice $nick $handle "Fun messages are currently turned off in $chan"
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: What question did you want to ask? :)"
+  } else {
+    msg $chan "8ball: $text?? [readr $set(script.dir)/$set(8ball.file)]"
+  }
+}

@@ -1,0 +1,35 @@
+###
+# Usage: /msg botnick addme <password> <channel>
+###
+
+### ADDME:
+bind msg - addme {msg_error msg_addme}
+
+### CHANNEL:
+proc msg_addme {nick uhost handle text} {
+  global set
+  chan_settings addme - $nick $uhost $handle [lindex $text 1] "******"
+  if {[lindex $text 0] == "" || [lindex $text 0] != $set(adminpass) || $handle == "*"} {
+    return
+  } elseif {[lindex $text 0] == $set(adminpass)} {
+    if {[lindex $text 1] == ""} {
+      notice $nick $handle "Invalid request: Where's the channel name?"
+    } elseif {![ischanopchan [lindex $text 1]]} {
+      notice $nick $handle "[lindex $text 1] is not a channel that I can add you to :("
+    } else {
+      if {[nickinfo $handle firsthost] == "0"} {
+        setuser $handle XTRA FIRSTHOST $uhost
+      }
+      if {[nickinfo $handle services] == "0"} {
+        setuser $handle XTRA SERVICES 1
+      }
+      +user $handle [lindex $text 1] $handle@message $nick!$uhost 200 1 0 1 [maskhost $nick!$uhost]
+      notice $nick $handle "It look's like you are an administrator. Added you to [lindex $text 1]"
+      putcmdlog "> !$handle! ($nick!$uhost) added themselves to [lindex $text 1] at level 200"
+      homechan "\[$handle\]($nick!$uhost) added themselves to [lindex $text 1] at level 200"
+    }
+  } else {
+    putcmdlog "> error ;addme\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+    notice $nick $handle "error ;addme\[1\]; please report to Cyborg- \[damian@testikles.org\] (#Testikles` @ AUSTnet.org)"
+  }
+}

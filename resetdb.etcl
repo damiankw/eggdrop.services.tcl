@@ -1,0 +1,58 @@
+###
+# Usage: /msg botnick resetdb [<channel>] [<level>]
+###
+
+### RESETDB:
+bind msg - resetdb {msg_error msg_resetdb}
+bind pub - $set(cmd)resetdb {pub_error pub_resetdb}
+
+### CHANNEL:
+proc pub_resetdb {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_resetdb c $nick $uhost $handle $chan $text
+  }
+}
+
+### QUERY:
+proc msg_resetdb {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } else {
+    all_resetdb m $nick $uhost $handle [lindex $text 0] [lrange $text 1 end]
+  }
+}
+
+### MAIN:
+proc all_resetdb {type nick uhost handle chan text} {
+  global set botnick
+  chan_settings resetdb $type $nick $uhost $handle $chan $text
+  if {![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+    return
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } elseif {[string tolower $type] == "c" && [chaninfo $chan nochanmsg]} {
+    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) resetdb]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) resetdb] for this command"
+  } else {
+    if {[lindex $text 0] == "" || ![isnum [lindex $text 0]]} {
+      set level 200
+    } else {
+      set level [lindex $text 0]
+    }
+    set count 0
+    foreach user [access $chan 1] {
+      if {[level $user $chan] < $level} {
+        -user $user $chan
+        incr count 1
+      }
+    }
+    notice $nick $handle "Removed $count users from $chan. Reset channel database to level $level and higher."
+    putcmdlog "> !$handle! ($nick!$uhost) RESETDB\[$type\] ($chan): reset to level $level, removed $count users"
+    homechan "\[$handle\]($nick!$uhost): reset channel database to level $level and higher (removed $count users)"
+  }
+}

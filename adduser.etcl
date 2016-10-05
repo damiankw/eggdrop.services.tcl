@@ -1,0 +1,101 @@
+###
+# Usage: /msg botnick adduser [<channel>] <nickname> [<level> <-userhost host> <-aop on/off> <-aov 1/0> <-protect yes/on>
+###
+
+### ADDUSER:
+bind msg - adduser {msg_error msg_adduser}
+bind pub - $set(cmd)adduser {pub_error pub_adduser}
+
+### CHANNEL:
+proc pub_adduser {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_adduser c $nick $uhost $handle $chan $text
+  }
+}
+    
+### QUERY:
+proc msg_adduser {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } else {
+    all_adduser m $nick $uhost $handle [lindex $text 0] [lrange $text 1 end]
+  }
+}
+
+### MAIN:
+proc all_adduser {type nick uhost handle chan text} {
+  global set botnick
+  chan_settings adduser $type $nick $uhost $handle $chan $text
+  if {![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+    return
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } elseif {[string tolower $type] == "c" && [chaninfo $chan nochanmsg]} {
+    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) adduser]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) adduser] for this command"
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: What nick are you adding?"
+  } elseif {[level [lindex $text 0] $chan] > "0"} {
+    notice $nick $handle "[lindex $text 0] already exists in the $chan database, use SETUSER to modify their settings"
+  } elseif {![onchan [lindex $text 0] $chan]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not currently on the channel."
+  } elseif {[nick2hand [lindex $text 0]] != "*" && [string tolower [nick2hand [lindex $text 0]]] != [string tolower [lindex $text 0]]} {
+    notice $nick $handle "[lindex $text 0] already exists in the $chan database as [nick2hand [lindex $text 0]], using hosts: [getuser [nick2hand [lindex $text 0]] HOSTS]"
+  } elseif {[llength [access $chan 1]] >= [chaninfo $chan quota] && [chaninfo $chan quota] != "0"} {
+    notice $nick $handle "The $chan database has [llength [access $chan 1]] users added and the quota is full, you may not add [lindex $text 0] here"
+  } else {
+    set cnt 0
+    set uh [maskhost [lindex $text 0]![getchanhost [lindex $text 0]]]
+    set lvl [lindex $set(autoadd) 0]
+    set aop [lindex $set(autoadd) 1]
+    set aov [lindex $set(autoadd) 2]
+    set pro [lindex $set(autoadd) 3]
+    while {[lindex $text $cnt] != ""} {
+      set w [string tolower [lindex $text $cnt]]
+      set wd [string tolower [lindex $text [expr $cnt + 1]]]
+      if {[letters $w 3 1] == "-us" && [string length $w] <= "9" && [string match *!*@* $wd]} {
+        set uh [lindex $text [expr $cnt + 1]]
+        incr cnt 2
+      } elseif {$w == "-aop" && ($wd == "1" || $wd == "0" || $wd == "yes" || $wd == "no" || $wd == "on" || $wd == "off")} {
+        set aop [change $wd 10]
+        incr cnt 2
+      } elseif {$w == "-aov" && ($wd == "1" || $wd == "0" || $wd == "yes" || $wd == "no" || $wd == "on" || $wd == "off")} {
+        set aov [change $wd 10]
+        incr cnt 2
+      } elseif {[letters $w 3 1] == "-pr" && [string length $w] <= "8" && ($wd == "1" || $wd == "0" || $wd == "yes" || $wd == "no" || $wd == "on" || $wd == "off")} {
+        set pro [change $wd 10]
+        incr cnt 2
+      } elseif {[isnum $w]} {
+        set lvl $w
+        incr cnt 1
+      } else {
+        incr cnt 1
+      }
+    }
+    if {$lvl >= [level $handle $chan] && [isspecial $handle all] == "0"} {
+      notice $nick $handle "Requested level addition of $lvl is equal to or higher than your level of [level $handle $chan]"
+      return
+    }
+    if {($lvl < "1" || $lvl > "199") && [isspecial $handle all] == "0"} {
+      notice $nick $handle "Invalid request: Valid levels are 1 to 199"
+      return
+    }
+    if {![validuser [lindex $text 0]]} {
+      newuser [lindex $text 0] $uh [getchanhost [lindex $text 0]]
+      notice $nick $handle "Could not find [lindex $text 0] in user database, adding as '$uh'"
+      putcmdlog "> !$handle! ($nick!$uhost) ADDUSER\[$type\]: adding new database user"
+      homechan "\[$handle\]($nick!$uhost) added [lindex $text 0] ([lindex $text 0]![getchanhost [lindex $text 0]]) to user database with host: $uh"
+    }
+    +user [lindex $text 0] $chan $handle $nick!$uhost $lvl $aop $aov $pro $uh
+    notice $nick $handle "Added [lindex $text 0] to channel $chan. Level: $lvl AOP: [change $aop onoff] Protect: [change $pro onoff] AOV: [change $aov onoff]"
+    notice [lindex $text 0] [lindex $text 0] "You have been added to $chan by $nick \[$handle\]. Level: $lvl AOP: [change $aop onoff] Protect: [change $pro onoff] AOV: [change $aov onoff]"
+    notice [lindex $text 0] [lindex $text 0] "In order to use this bot you will need to set a password. Do this with: /msg $botnick pass <new password>"
+    putcmdlog "> !$handle! ($nick!$uhost) ADDUSER\[$type\] ($chan): NickName:\[[lindex $text 0]\] AOP:\[[change $aop onoff]\] AOV:\[[change $aov onoff]\] PROTECT:\[[change $pro onoff]\]"
+    homechan "\[$handle\]($nick!$uhost) added [lindex $text 0] to channel $chan. Level: $lvl AOP: [change $aop onoff] Protect: [change $pro onoff] AOV: [change $aov onoff] UserHost: $uh"
+  }
+}

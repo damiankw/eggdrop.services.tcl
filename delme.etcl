@@ -1,0 +1,48 @@
+###
+# Usage: /msg botnick delme [<channel>]
+###
+
+### DELME:
+bind msg - delme {msg_error msg_delme}
+bind pub - $set(cmd)delme {pub_error pub_delme}
+
+### CHANNEL:
+proc pub_delme {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_delme c $nick $uhost $handle $chan $text
+  }
+}
+    
+### QUERY:
+proc msg_delme {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } else {
+    all_delme m $nick $uhost $handle [lindex $text 0] [lrange $text 1 end]
+  }
+}
+
+### MAIN:
+proc all_delme {type nick uhost handle chan text} {
+  global set botnick
+  chan_settings delme $type $nick $uhost $handle $chan $text
+  if {[level $handle $chan] == "0"} {
+    return
+  } elseif {![nickinfo $handle auth]} {
+    notice $nick $handle "You are not yet authenticated."
+  } elseif {[nickinfo $handle userhost] != $uhost} {
+    notice $nick $handle "Your current userhost of '$uhost' is not the one you authenticated with."
+  } elseif {[string tolower $type] == "c" && [chaninfo $chan nochanmsg]} {
+    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } else {
+    -user $handle $chan
+    notice $nick $handle "Removed $handle's access from $chan"
+    putcmdlog "> !$handle! ($nick!$uhost) DELME\[$type\] ($chan)"
+  }
+}

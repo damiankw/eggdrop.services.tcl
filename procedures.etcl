@@ -1,0 +1,1204 @@
+### Custom procedures ###
+## This is the place for all the procedures needed for the other scripting.
+# Descriptions for all the procedures are above the procedures.
+
+### NOTICE: notice <nick> <handle> <text>
+##  Used to /notice nicknames
+proc notice {nick handle text} {
+  if {![validuser $handle] || ![nickinfo $handle interface]} {
+    puthelp "NOTICE $nick :$text"
+  } else {
+    puthelp "PRIVMSG $nick :$text"
+  }
+}
+
+### MSG: msg <nickname> <text>
+##  Used to /msg nicknames/channels
+proc msg {nick text} {
+  puthelp "PRIVMSG $nick :$text"
+}
+
+### -USER: -user <nick-deleted> <channel>
+##  Deletes a user from a specific channel
+proc -user {nick chan} {
+  setuser $nick XTRA LEVEL([string toupper $chan])
+  setuser $nick XTRA AOP([string toupper $chan])
+  setuser $nick XTRA AOV([string toupper $chan])
+  setuser $nick XTRA PROTECT([string toupper $chan])
+  setuser $nick XTRA LASTMOD([string toupper $chan])
+  setuser $nick XTRA LASTSEEN([string toupper $chan])
+}
+
+### +USER: +user <nick-added> <channel> <added-by-who> <by-who-userhost> <level> <aop> <aov> <protect> <userhost>
+##  Add a user to a specific channel
+proc +user {nick chan handle uhost lvl aop aov pro uh} {
+  setuser $nick XTRA LEVEL([string toupper $chan]) $lvl
+  setuser $nick XTRA AOP([string toupper $chan]) $aop
+  setuser $nick XTRA AOV([string toupper $chan]) $aov
+  setuser $nick XTRA PROTECT([string toupper $chan]) $pro
+  setuser $nick XTRA LASTMOD([string toupper $chan]) "[unixtime] $handle $uhost"
+  setuser $nick XTRA LASTSEEN([string toupper $chan]) [unixtime]
+  setuser $nick HOSTS $uh
+}
+
+### +SUSPEND: +suspend <channel> <handle> <time in seconds> <reason>
+##  Sets a user suspended, sending the notice
+proc +suspend {chan handle time reason} {
+  global set
+  if {![suspend $handle $chan]} {
+    setuser $handle xtra SUSPEND([string toupper $chan]) 1
+    setuser $handle xtra SUSPENDR([string toupper $chan]) $reason
+    setuser &suspend& xtra $chan,$handle "[expr [unixtime] + $time] [timer [expr $time / 60] "-suspend $chan $handle"]"
+    if {[notify $handle]} {
+      notice $handle $handle "You have been suspended on $chan for [expr $time / 60] minutes"
+    }
+  } else {
+    if {[istimer [string trimleft [lindex [suspendinfo $chan $handle] 1] timer]]} {
+      killtimer [lindex [suspendinfo $chan $handle] 1]
+    }
+    setuser $handle xtra SUSPENDR([string toupper $chan]) $reason
+    setuser &suspend& xtra $chan,$handle "[expr [lindex [suspendinfo $chan $handle] 0] + $time] [timer [expr ($time / 60) + ([lindex [suspendinfo $chan $handle] 0] - [unixtime]) / 60] "-suspend $chan $handle"]"
+    if {[notify $handle]} {
+      notice $handle $handle "You have been suspended on $chan for an extra [expr $time / 60] minutes"
+    }
+  }
+}
+
+### -SUSPEND: -suspend <channel> <handle>
+##  Unsuspends a user in a channel
+proc -suspend {chan handle} {
+  global set
+  putlog "> Suspension on $chan for $handle expired."
+  setuser $handle xtra SUSPEND([string toupper $chan]) 0
+  setuser $handle xtra SUSPENDR([string toupper $chan])
+  if {[istimer [string trimleft [lindex [suspendinfo $chan $handle] 1] timer]]} {
+    killtimer [lindex [suspendinfo $chan $handle] 1]
+  }
+  setuser &suspend& xtra $chan,$handle
+}
+
+### SUSPENDINFO: suspendinfo <channel> <handle>
+##  Returns the 'ctime timernumber' of the suspension
+proc suspendinfo {chan handle} {
+  return [getuser &suspend& xtra $chan,$handle]
+}
+
+### CHANGE: change <word> <type>
+##  To change '0/1' into 'Yes/No' or 'On/Off' and vise-versa
+proc change {word type} {
+  set type [string tolower $type]
+  set word [string tolower $word]
+  if {($word == "yes" || $word == "on" || $word == "1") && $type == "10"} {
+    return 1
+  } elseif {($word == "yes" || $word == "on" || $word == "1") && $type == "onoff"} {
+    return On
+  } elseif {($word == "yes" || $word == "on" || $word == "1") && $type == "yesno"} {
+    return Yes
+  } elseif {($word == "no" || $word == "off" || $word == "0") && $type == "10"} {
+    return 0
+  } elseif {($word == "no" || $word == "off" || $word == "0") && $type == "onoff"} {
+    return Off
+  } elseif {($word == "no" || $word == "off" || $word == "0") && $type == "yesno"} {
+    return No
+  } else {
+    return
+  }
+}
+
+### FINDIDX: findidx <idx>
+##  Find's the information of a specific idx of a dcc
+proc findidx {idx} {
+  foreach num [dcclist] {
+    if {[lindex $num 0] == $idx} {
+      return $num
+    }
+  }
+}
+
+### LEVEL: level <handle> <channel>
+##  See the level of a handle in a channel
+proc level {handle chan} {
+  if {![validuser $handle] || [getuser $handle xtra level($chan)] == ""} {
+    return 0
+  } else {
+    return [getuser $handle xtra level($chan)]
+  }
+}
+
+### AOP: aop <handle> <channel>
+##  See the AOP status of a handle in a channel
+proc aop {handle chan} {
+  if {![validuser $handle] || [getuser $handle xtra aop($chan)] == ""} {
+    return 0
+  } else {
+    return [getuser $handle xtra aop($chan)]
+  }
+}
+
+### AOV: aov <handle> <channel>
+##  See the AOV status of a handle in a channel
+proc aov {handle chan} {
+  if {![validuser $handle] || [getuser $handle xtra aov($chan)] == ""} {
+    return 0
+  } else {
+    return [getuser $handle xtra aov($chan)]
+  }
+}
+
+### PROTECT: protect <handle> <channel>
+##  See the Protection status of a handle in a channel
+proc protect {handle chan} {
+  if {![validuser $handle] || [getuser $handle xtra protect($chan)] == ""} {
+    return 0
+  } else {
+    return [getuser $handle xtra protect($chan)]
+  }
+}
+
+### SUSPEND: suspend <handle> <channel>
+##  See the Suspension status of a handle in a channel
+proc suspend {handle chan} {
+  if {![validuser $handle] || [getuser $handle xtra suspend($chan)] == ""} {
+    return 0
+  } else {
+    return [getuser $handle xtra suspend($chan)]
+  }
+}
+
+### REPLACE: replace <text> <character> <replacing-with>
+##  Replaces 'character' with 'replacing-with' (single characters only)
+proc replace {text tok rep} {
+  set atext ""
+  foreach char [split $text ""] {
+    if {$char == $tok} {
+      set atext $atext$rep
+    } else {
+      set atext $atext$char
+    }
+  }
+  return $atext
+}
+
+### EXTEXT: extext <text> <word>
+##  Removed 'word' from 'text'
+proc extext {text word} {
+  set words ""
+  foreach w $text {
+    if {[string tolower $word] != [string tolower $w]} {
+      set words "$words $w"
+    }
+  }
+  return [string trimleft $words " "]
+}
+
+### COMCHAN: comchan <nickname>
+##  Returns the common channels of nickname and botnick
+proc comchan {nick} {
+  set chans ""
+  foreach chan [channels] {
+    if {[onchan $nick $chan]} {
+      set chans "$chans $chan"
+    }
+  }
+  return [string trimleft $chans " "]
+}
+
+### ISSPECIAL: isspecial <handle> <channel>
+##  Tells if a handle is a special user (+n, +m etc.)
+proc isspecial {handle chan} {
+  if {[matchattr $handle +n]} {
+    return 300
+  } elseif {[matchattr $handle |+n $chan]} {
+    return 300
+  } elseif {[matchattr $handle |+m $chan]} {
+    return 200
+  } elseif {[matchattr $handle +m]} {
+    return 200
+  } elseif {[matchattr $handle |+o $chan]} {
+    return 100
+  } elseif {[matchattr $handle +o]} {
+    return 100
+  } else {
+    return 0
+  }
+}
+
+### GETCHANNELACCESS: getchannelaccess <handle>
+##  Returns the channels a nickname has access in
+proc getchannelaccess {handle} {
+  if {![validuser $handle]} {
+    return
+  }
+  set channels ""
+  foreach info [getuser $handle xtra] {
+    if {[string tolower [letters $info 5 1]] == "level"} {
+      set chan [string trimright [string trimleft [lindex $info 0] LEVEL(] )]
+      set channels "$channels \{$chan [level $handle $chan] [aop $handle $chan] [aov $handle $chan] [protect $handle $chan]\}"
+    }
+  }
+  return [string trimleft $channels " "]
+}
+
+### GETSTRING: getstring <string>
+##  Changes 'nickname' into '*!*ident@*.isp.com' for example. Used for +ban/-ban commands
+proc getstring {string} {
+  if {[string match !*@ $string] == "1"} {
+    return *$string*
+  } elseif {[string match !* $string] == "1"} {
+    return *$string@*
+  } elseif {[string match @* $string] == "1"} {
+    return *!*$string
+  } elseif {[string match !*@* $string] == "1"} {
+    return *$string
+  } elseif {[string match *!*@ $string] == "1"} {
+    return $string*
+  } elseif {[string match *! $string] == "1"} {
+    return $string*@*
+  } elseif {[string match *@ $string] == "1"} {
+    return *!$string*
+  } elseif {[string match *@* $string] == "1" && [string match *!* $string] == "0"} {
+    return *!$string
+  } elseif {[string match *!*@* $string] == "1"} {
+    return $string
+  } elseif {[getchanhost $string] != ""} {
+    return [maskhost [getchanhost $string]]
+  } else {
+    return $string!*@*
+  }
+}
+
+### LASTMOD: lastmod <handle> <chan>
+##  See who last modified a handle in a channel and when
+proc lastmod {handle chan} {
+  if {![validuser $handle] || [getuser $handle xtra lastmod($chan)] == ""} {
+    return 0
+  } else {
+    return [getuser $handle xtra lastmod($chan)]
+  }
+}
+
+### LASTSEEN: lastseen <handle> <chan>
+##  See when a handle was last seen on a channel
+proc lastseen {handle chan} {
+  if {![validuser $handle] || [getuser $handle xtra lastseen($chan)] == ""} {
+    return 0
+  } else {
+    return [getuser $handle xtra lastseen($chan)]
+  }
+}
+
+### ACCESS: access <channel> <min level>
+##  Filters out all the nicknames who have a level equal or higher to 'min level' on a channel
+proc access {chan level} {
+  global set
+  set users ""
+  foreach user [userlist] {
+    if {[level $user $chan] >= $level} {
+      set users "$users $user"
+    }
+  }
+  return [string trimleft $users " "]
+}
+
+### ISCHANMODE: ischanmode <mode>
+##  Checks to see if a channel mode is actually a channel mode on that channel (uses $set(chanmode) var)
+proc ischanmode {mode} {
+  global set
+  foreach m [split $set(chanmode) ""] {
+    if {$mode == $m} {
+      return 1
+    }
+  }
+  return 0
+}
+
+### MODEONCHAN: modeonchan <channel> <mode>
+##  Check's to see if a mode is in the 'modelock' feature on a channel
+#proc 
+
+### CHARSTRIP: charstrip <text>
+##  Similar to '$strip' in mIRC but removes ALL codes for bold/colour/reverse/underline
+proc charstrip {text} {
+  set r ""
+  set t 0
+  foreach c [split $text ""] {
+    if {$c == ""} {
+      set t 1
+    } elseif {$t} {
+      if {![string match \[0-9\] $c] && $c != "" && $c != "" && $c != "" && $c != ""} {
+        set r $r$c
+        set t 0
+      }
+    } elseif {$c != "" && $c != "" && $c != "" && $c != ""} {
+      set r $r$c
+    }
+  }
+  return $r
+}
+
+### SAVE_SETTINGS: save_settings
+##  Saves the general bot settings (home channel, working channels etc.)
+proc save_settings {} {
+  global set
+  set wfile [open $set(data.dir)/$set(set.file) "WRONLY CREAT"]
+  puts $wfile $set(mainchan)
+  puts $wfile $set(homechan)
+  close $wfile
+}
+
+### ISNUM: isnum <text>
+##  Checks to see if the text is a number or not
+proc isnum {text} {
+  foreach char [split $text ""] {
+    if {![string match \[0-9\] $char] && $char != "."} { return 0 }
+  }
+  return 1
+}
+
+### SERVER_CONNECT: server_connect
+##  Does all the shit instead of putting it in '$init-server' variable
+proc server_connect {} {
+  global botnick set notify
+  putserv "MODE $botnick $set(servermode)"
+  foreach user [userlist] {
+    if {$user != "&banlist&" && $user != "&suspend&"} {
+      setuser $user XTRA AUTH 0
+    }
+  }
+  if {![info exists notify]} { set notify([string tolower $botnick]) 1 }
+  putserv "ISON :$botnick [userlist]"
+}
+
+### AUTH_AUTOMODE: auth_automode <nickname> <handle> <userhost>
+##  Used after authentication to auto-OP/Voice a handle in channels they are on 
+proc auth_automode {nick handle uhost} {
+  global set
+  set chans ""
+  foreach chan $set(mainchan) {
+    if {[level $handle $chan] > "0"} {
+      if {![botisop $chan]} {
+        set chans "$chans, $chan \[bot not opd\]"
+      } elseif {![onchan $nick $chan]} {
+        set chans "$chans, $chan \[not on\]"
+      } elseif {[suspend $handle $chan]} {
+        set chans "$chans, $chan \[Suspended\]"
+      } elseif {[aop $handle $chan]} {
+        set chans "$chans, $chan \[AOP\]"
+        pushmode $chan +o $nick
+      } elseif {[aov $handle $chan]} {
+        set chans "$chans, $chan \[AOV\]"
+        pushmode $chan +v $nick
+      }
+    }
+  }
+  homechan "\[$handle\]($nick!$uhost): authentication status: [string trimleft $chans ", "]"
+}
+
+### DEAUTH_AUTOMODE: deauth_automode <nickname> <handle>
+##  Used after deauthentication to auto-DeOP/Voice a handle in channels they are on
+proc deauth_automode {nick handle} {
+  global set
+  foreach chan $set(mainchan) {
+    if {[level $handle $chan] > "0"} {
+      if {[isop $nick $chan]} {
+        pushmode $chan -o $nick
+      }
+      if {[isvoice $nick $chan]} {
+        pushmode $chan -v $nick
+      }
+    }
+  }
+}
+
+### AUTH_CHECK: auth_check <nickname> <userhost> <handle> <channel>
+##  Checks all settings against handle's to make sure they are authenticated properly
+proc auth_check {nick uhost handle chan} {
+  global set
+  if {![validuser $handle]} {
+    return 0
+  } elseif {![nickinfo $handle auth]} {
+    notice $nick $handle "You are not yet authenticated."
+    return 0
+  } elseif {[nickinfo $handle userhost] != $uhost} {
+    notice $nick $handle "Your current userhost of '$uhost' is not the one you authenticated with."
+    return 0
+  } elseif {![ischanopchan $chan] && [level $handle $chan] > "0"} {
+    notice $nick $handle "Invalid request: $chan isn't currently activated"
+    return 0
+  } elseif {[suspend $handle $chan]} {
+    notice $nick $handle "You are currently suspended in $chan. Your commands are being ignored."
+    return 0
+  } else {
+    return 1
+  }
+}
+
+### LETTERS: letters <text> <number> <type[1/0]>
+##  Similar to $left/$right in mIRC 1 = right, 0 = left
+proc letters {text num type} {
+  set c 0
+  set r ""
+  if {!$type} {
+    set e 0
+    foreach let [split $text ""] {
+      if {$c == $num} {
+        set e 1
+        set r $r$let
+        incr c 1
+      } elseif {!$e} {
+        incr c 1
+      } else {
+        set r $r$let
+        incr c 1
+      }
+    }
+    return $r
+  } elseif {$type} {
+    foreach let [split $text ""] {
+      if {$c == $num} {
+        return $r
+      }
+      set r $r$let
+      incr c 1
+    }
+    return $r
+  }
+}
+
+### ISTIMER: istimer <number/command>
+##  Returns 1/0 for if there is timer matching the number/command
+proc istimer {n} {
+  foreach timer [timers] {
+    if {[isnum $n] && [lindex $timer 2] == "timer$n"} {
+      return 1
+    } elseif {![isnum $n] && [string tolower [lindex $timer 1]] == [string tolower $n]} {
+      return 1
+    }
+  }
+  return 0
+}
+
+### ISUTIMER: isutimer <number/command>
+##  Returns 1/0 for if there is utimer matching the number/command
+proc isutimer {n} {
+  foreach timer [utimers] {
+    if {[isnum $n] && [lindex $timer 2] == "timer$n"} {
+      return 1
+    } elseif {![isnum $n] && [string tolower [lindex $timer 1]] == [string tolower $n]} {
+      return 1
+    }
+  }
+  return 0
+}
+
+### SEARCH_BOTOP: search_botop <channel>
+##  Searches all connected bots for one that's op'd in a channel and asks for an op
+proc search_botop {chan} {
+  global set
+  foreach bot [bots] {
+    if {[isop [hand2nick $bot] $chan]} {
+      putbot $bot "opme $chan"
+    }
+  }
+}
+
+### NICKINFO: nickinfo <nickname> <setting>
+##  Basically gets information from [getuser handle XTRA setting]
+proc nickinfo {handle setting} {
+  if {![validuser $handle] || [getuser $handle xtra $setting] == ""} {
+    return 0
+  } else {
+    return [getuser $handle xtra $setting]
+  }
+}
+
+### CHANINFO: chaninfo <channel> <setting>
+##  Returns various information about the channel
+proc chaninfo {chan setting} {
+  global set chaninfo
+  if {![info exists chaninfo([string tolower $chan],[string tolower $setting])]} {
+    return 0
+  } else {
+    return $chaninfo([string tolower $chan],[string tolower $setting])
+  }
+}
+
+### SETCHANINFO: setchaninfo <channel> <setting> <value>
+##  Writes all settings into the settings file
+proc setchaninfo {chan setting value} {
+  global set chaninfo
+  set wfile [open $set(data.dir)/[string tolower $chan].settings WRONLY]
+  set chan [string tolower $chan]
+  set chaninfo($chan,[string tolower $setting]) $value
+  puts $wfile $chaninfo($chan,channel)
+  puts $wfile $chaninfo($chan,peak)
+  puts $wfile $chaninfo($chan,owner)
+  puts $wfile $chaninfo($chan,address)
+  puts $wfile $chaninfo($chan,url)
+  puts $wfile $chaninfo($chan,modelock)
+  puts $wfile $chaninfo($chan,keeptopic)
+  puts $wfile $chaninfo($chan,topic)
+  puts $wfile $chaninfo($chan,created)
+  puts $wfile $chaninfo($chan,oprestrict)
+  puts $wfile $chaninfo($chan,mustid)
+  puts $wfile $chaninfo($chan,telladd)
+  puts $wfile $chaninfo($chan,tellsetu)
+  puts $wfile $chaninfo($chan,telldel)
+  puts $wfile $chaninfo($chan,tellset)
+  puts $wfile $chaninfo($chan,tellpeak)
+  puts $wfile $chaninfo($chan,funmsg)
+  puts $wfile $chaninfo($chan,reportlog)
+  puts $wfile $chaninfo($chan,restrict)
+  puts $wfile $chaninfo($chan,nonote)
+  puts $wfile $chaninfo($chan,quota)
+  puts $wfile $chaninfo($chan,banquota)
+  puts $wfile $chaninfo($chan,accessall)
+  puts $wfile $chaninfo($chan,hash)
+  close $wfile
+}
+
+### ISCHANOPCHAN: ischanopchan <channel>
+##  Checks to see if a channel is monitored by the script
+proc ischanopchan {chan} {
+  global set
+  foreach channel $set(mainchan) {
+    if {[string tolower $channel] == [string tolower $chan]} {
+      return 1
+    }
+  }
+  return 0
+}
+
+### HOMECHAN: homechan <text>
+##  Sends a message to the home channel (this is via botnet if the option is available)
+proc homechan {text} {
+  global set
+  msg $set(homechan) $text
+}
+
+### CHECK_SETTINGS: check_settings
+##  Check's all settings, making new settings if needed, changing old if needed and running commands
+proc check_settings {} {
+  global set botnick
+  if {![istimer check_settings]} {
+    timer 120 check_settings
+  }
+  putlog "> Authenticating to Nickname service..."
+  msg $set(NickOPi) "identify $set(password)"
+  putlog "> Checking operator status on main channels..."
+  foreach channel $set(mainchan) {
+    if {[validchan $channel] && ![botisop $channel] && [onchan $botnick $channel]} {
+      homechan "I'm not an operator on $channel."
+      putlog "> I'm not an operator on $channel, checking if another bot can op me"
+      search_botop $channel
+    }
+  }
+  putlog "> Checking socket settings..."
+  if {$set(sockcommand)} {
+    listen $set(listenport) script listen_command
+  } elseif {!$set(sockcommand)} {
+    catch {listen $set(listenport) off}
+  }
+  putlog "> Checking user status... Levels, users..."
+  if {![validuser &banlist&]} {
+    putlog "> Could not find bans user... adding..."
+    adduser &banlist&
+    setuser &banlist& pass &BANLIST&
+    chattr &banlist& +U
+  }
+  if {![validuser &suspend&]} {
+    putlog "> Could not find suspends user... adding..."
+    adduser &suspend&
+    setuser &suspend& pass &SUSPENSIONS&
+    chattr &suspend& +U
+  }
+  set cnt 0
+  foreach user [userlist] {
+    if {[getchannelaccess $user] == "" && [isspecial $user all] == "0" && ![matchattr $user U]} {
+      deluser $user
+      putlog "> Found $user to have no access anywhere.. removing..."
+      homechan "Removing $user from user database.. they have no access anywhere"
+      continue
+    }
+    foreach chaninfo [getchannelaccess $user] {
+      set channel [lindex $chaninfo 0]
+      if {[level $user $channel] <= "0" || [level $user $channel] > "200"} {
+        setuser $user XTRA LEVEL($channel) [lindex $set(autoadd) 0]
+        setuser $user XTRA AOP($channel) [lindex $set(autoadd) 1]
+        setuser $user XTRA AOV($channel) [lindex $set(autoadd) 2]
+        setuser $user XTRA PROTECT($channel) [lindex $set(autoadd) 3]
+        setuser $user XTRA LASTMOD($channel) $botnick!bogus-settings.testikles.org
+        setuser $user XTRA LASTSEEN($channel) [unixtime]
+        putlog "> Found $user to have a bogus level of [level $user $channel] on $channel... resetting to [lindex $set(autoadd) 0]"
+      }
+    }
+  }
+  if {$cnt > "0"} {
+    homechan "Reset $cnt bogus level's to level [lindex $set(autoadd) 0]"
+  }
+  foreach channel $set(mainchan) {
+    if {![file isfile $set(data.dir)/[string tolower $channel].settings]} {
+      putlog "> Could not locate settings file for $channel.. creating..."
+      addmainchan $channel
+    }
+    getallchaninfo $channel
+    if {[lindex [channel info $channel] 0] != ""} {
+      channel set $channel chanmode ""
+    }
+  }
+  putlog "> Checking banlist and suspension list..."
+  foreach ban [getuser &banlist& xtra] {
+    set b_chan [lindex [replace [lindex $ban 0] , " "] 0]
+    set b_mask [lindex [replace [lindex $ban 0] , " "] 1]
+    if {$b_chan == "" || $b_mask == ""} {
+      continue
+    } elseif {![isban $b_mask $b_chan]} {
+      setuser &banlist& xtra [lindex $ban 0]
+    }
+  }
+  foreach suspend [getuser &suspend& xtra] {
+    set s_chan [lindex [replace [lindex $suspend 0] , " "] 0]
+    set s_nick [lindex [replace [lindex $suspend 0] , " "] 1]
+    if {$s_chan == "" || $s_nick == ""} {
+      continue
+    } elseif {![suspend $s_nick $s_chan] || [lindex [suspendinfo $s_chan $s_nick] 0] <= [unixtime]} {
+      -suspend $s_chan $s_nick
+    } elseif {![istimer [string trimleft [lindex [suspendinfo $s_chan $s_nick] 1] timer]]} {
+      setuser &suspend& xtra $s_chan,$s_nick "[lindex [suspendinfo $s_chan $s_nick] 0] [timer [expr ([lindex [suspendinfo $s_chan $s_nick] 0] - [unixtime]) / 60] "-suspend $s_chan $s_nick"]"
+    }
+  }
+  putlog "> Checked all general settings..."
+}
+
+### GETALLCHANINFO: getallchaninfo <channel>
+##  Sets $temp(*) to channel information
+proc getallchaninfo {chan} {
+  global set chaninfo
+  if {![file isfile $set(data.dir)/[string tolower $chan].settings]} {
+    return 1
+  }
+  set rfile [open $set(data.dir)/[string tolower $chan].settings RDONLY]
+  set chaninfo([string tolower $chan],channel) [gets $rfile]
+  set chaninfo([string tolower $chan],peak) [gets $rfile]
+  set chaninfo([string tolower $chan],owner) [gets $rfile]
+  set chaninfo([string tolower $chan],address) [gets $rfile]
+  set chaninfo([string tolower $chan],url) [gets $rfile]
+  set chaninfo([string tolower $chan],modelock) [gets $rfile]
+  set chaninfo([string tolower $chan],keeptopic) [gets $rfile]
+  set chaninfo([string tolower $chan],topic) [gets $rfile]
+  set chaninfo([string tolower $chan],created) [gets $rfile]
+  set chaninfo([string tolower $chan],oprestrict) [gets $rfile]
+  set chaninfo([string tolower $chan],mustid) [gets $rfile]
+  set chaninfo([string tolower $chan],telladd) [gets $rfile]
+  set chaninfo([string tolower $chan],tellsetu) [gets $rfile]
+  set chaninfo([string tolower $chan],telldel) [gets $rfile]
+  set chaninfo([string tolower $chan],tellset) [gets $rfile]
+  set chaninfo([string tolower $chan],tellpeak) [gets $rfile]
+  set chaninfo([string tolower $chan],funmsg) [gets $rfile]
+  set chaninfo([string tolower $chan],reportlog) [gets $rfile]
+  set chaninfo([string tolower $chan],restrict) [gets $rfile]
+  set chaninfo([string tolower $chan],nonote) [gets $rfile]
+  set chaninfo([string tolower $chan],quota) [gets $rfile]
+  set chaninfo([string tolower $chan],banquota) [gets $rfile]
+  set chaninfo([string tolower $chan],accessall) [gets $rfile]
+  set chaninfo([string tolower $chan],hash) [gets $rfile]
+  close $rfile
+  if {![info exists chaninfo([string tolower $chan],idle)]} {
+    set chaninfo([string tolower $chan],idle) [unixtime]
+  }
+  if {![info exists chaninfo([string tolower $chan],manseen)]} {
+    set chaninfo([string tolower $chan],manseen) [unixtime]
+  }
+  return 0
+}
+
+### NICKSETTINGS: nicksettings <handle>
+##  Returns the nickname options for a handle
+proc nicksettings {handle} {
+  set settings ""
+  if {[nickinfo $handle telladd]} {
+    set settings "$settings, Note on adduser"
+  }
+  if {[nickinfo $handle tellset]} {
+    set settings "$settings, Note on setuser"
+  }
+  if {[nickinfo $handle telldel]} {
+    set settings "$settings, Note on deluser"
+  }
+  if {[nickinfo $handle interface] == "0"} {
+    set settings "$settings, NOTICE Interface"
+  } else {
+    set settings "$settings, PRIVMSG Interface"
+  }
+  return [string trimleft $settings ", "]
+}
+
+### NEWUSER: newuser <handle> <userhost>
+##  Adds a new user to the bot, not a specific channel
+proc newuser {handle userhost uhost} {
+  adduser $handle $userhost
+  setuser $handle XTRA USERHOST [getchanhost $handle]
+  setuser $handle XTRA AUTH 0
+  setuser $handle XTRA SERVICES 1
+  setuser $handle XTRA FIRSTHOST $uhost
+}
+
+### OWNERSETTINGS: ownersettings <channel>
+##  Returns the owner settings of a channel
+proc ownersettings {chan} {
+  global botnick set
+  set ownersettings ""
+  if {[chaninfo $chan oprestrict] > "0"} {
+    set ownersettings "$ownersettings, OpRestricted to [chaninfo $chan oprestrict]"
+  }
+  if {[chaninfo $chan mustid]} {
+    set ownersettings "$ownersettings, MustID"
+  }
+  if {[onchan $botnick $chan]} {
+    set ownersettings "$ownersettings, On Channel"
+  }
+  if {[chaninfo $chan telladd]} {
+    set ownersettings "$ownersettings, Notify adduser"
+  }
+  if {[chaninfo $chan tellsetu]} {
+    set ownersettings "$ownersettings, Notify setuser"
+  }
+  if {[chaninfo $chan telldel]} {
+    set ownersettings "$ownersettings, Notify deluser"
+  }
+  if {[chaninfo $chan tellset]} {
+    set ownersettings "$ownersettings, Notify set"
+  }
+  if {[chaninfo $chan tellpeak]} {
+    set ownersettings "$ownersettings, Notify peak break"
+  }
+  if {[chaninfo $chan funmsg]} {
+    set ownersettings "$ownersettings, Fun Messages"
+  }
+  if {[chaninfo $chan reportlog]} {
+    set ownersettings "$ownersettings, Report Log"
+  }
+  return [string trimleft $ownersettings ", "]
+}
+
+### ADDMAINCHAN: addmainchan <channel>
+##  Just add's the main channel settings into the file so all commands work properly
+proc addmainchan {chan} {
+  global set
+  channel set $chan chanmode ""
+  set wfile [open $set(data.dir)/[string tolower $chan].settings "WRONLY CREAT"]
+  puts $wfile $chan
+  puts $wfile "[llength [chanlist $chan]] [unixtime]"
+  puts $wfile [userlist +n]
+  puts $wfile bots@testikles.org
+  puts $wfile http://www.testikles.org
+  puts $wfile "100 +nt"
+  puts $wfile 100
+  puts $wfile [topic $chan]
+  puts $wfile [unixtime]
+  puts $wfile 1
+  puts $wfile 1
+  puts $wfile 0
+  puts $wfile 0
+  puts $wfile 0
+  puts $wfile 0
+  puts $wfile 0
+  puts $wfile 1
+  puts $wfile 0
+  puts $wfile 0
+  puts $wfile 25
+  puts $wfile 300
+  puts $wfile 300
+  puts $wfile 190
+  puts $wfile [rand 999]
+  puts $wfile 0
+  close $wfile
+}
+
+### STARTUP_OPTIONS: startup_options
+##  Creates all directories and settings needed to run Services
+proc startup_options {} {
+  global set
+  putlog "> Checking directories..."
+  if {![file isdirectory $set(script.dir)]} {
+    putlog "> Could not find the chanop directory.. this is where your scripts are..."
+    return error
+  }    
+  if {![file isdirectory $set(data.dir)]} {
+    if {[catch {exec mkdir $set(data.dir)}]} {
+      putlog "> Error: Could not create data directory."
+      putlog "> Setup detected fatal error, Testicles`\[e\] need's this directory to run.."
+      return error
+    }
+    putlog "> Created data directory successfully..."
+  }
+  putlog "> Checking files..."
+  if {![file isfile $set(data.dir)/$set(set.file)]} {
+    putlog "> Could not locate settings file.. creating..."
+    save_settings
+  }
+  if {![file isfile $set(script.dir)/$set(quickban.file)]} {
+    putlog "> Could not locate quickban file.. the 'ban -quick option' will not work without it."
+  }
+  if {![file isfile $set(script.dir)/$set(topics.file)]} {
+    putlog "> Could not locate topics file.. the 'topic' command may not work properly."
+  }
+  if {![file isfile $set(script.dir)/$set(8ball.file)]} {
+    putlog "> Could not locate 8ball file.. the 8ball will not work without it."
+  }
+  if {![file isfile $set(script.dir)/$set(com.file)]} {
+    putlog "> Could not locate the command file '$set(com.file)'.. creating..."
+    command_create
+  }
+  putlog "> Checking channels..."
+  foreach channel $set(mainchan) {
+    if {![validchan $channel]} {
+      channel add $channel
+      putlog "> Added main channel $channel..."
+      channel set $channel chanmode ""
+    }
+  }
+  if {![validchan $set(homechan)]} {
+    channel add $set(homechan)
+    putlog "> Added home channel..."
+  }
+  if {![istimer check_settings]} {
+    check_settings
+  }
+}
+
+### COMMAND_CREATe: command_create
+##  Creates the '$set(com.file)' file in the script directory
+proc command_create {} {
+  global set
+  if {![file isdir $set(script.dir)]} {
+    return
+  }
+  set wfile [open $set(script.dir)/$set(com.file) "WRONLY CREAT"]
+  puts $wfile 8ball==25
+  puts $wfile access==1
+  puts $wfile adduser==150
+  puts $wfile ban==75
+  puts $wfile clean==100
+  puts $wfile commands==1
+  puts $wfile delme==1
+  puts $wfile deluser==150
+  puts $wfile deop==100
+  puts $wfile devoice==25
+  puts $wfile fun==25
+  puts $wfile info==1
+  puts $wfile invite==25
+  puts $wfile kick==50
+  puts $wfile listban==1
+  puts $wfile mdeop==190
+  puts $wfile mdevoice==190
+  puts $wfile mimic==25
+  puts $wfile op==100
+  puts $wfile resetdb==200
+  puts $wfile seek==25
+  puts $wfile set==190
+  puts $wfile setuser==150
+  puts $wfile topic==50
+  puts $wfile unban==75
+  puts $wfile voice==25
+  close $wfile
+}
+
+### CDURATION: cduration <time in seconds>
+##  Changes seconds into format for idle/manager seen on info
+proc cduration {time} {
+  set days [expr $time /60/24/60]
+  set time [expr $time - ($days *60*24*60)]
+  set hrs [expr $time /60/60]
+  set time [expr $time - ($hrs *60*60)]
+  set mins [expr $time /60]
+  set time [expr $time - ($mins *60)]
+  return "$days d, [align $hrs 2 0 R] h, [align $mins 2 0 R] m, [align $time 2 0 R] s"
+}
+
+### ALIGN: align <text> <length> <character> <type [L/R/C]>
+##  Aligns text Left, Right or Centered [listban, access etc.]
+proc align {text num char type} {
+  set a ""
+  set b 1
+  while {$b <= [expr $num - [string length $text]]} {
+    set a $a$char
+    incr b 1
+  }
+  if {[string toupper $type] == "R"} {
+    return $a$text
+  } elseif {[string toupper $type] == "L"} {
+    return $text$a
+  } elseif {[string toupper $type] == "C"} {
+    return [letters $a [expr [string length $a] / 2] 1]$text[letters $a [expr [string length $a] / 2] 0]
+  }
+}
+
+### CHAN_SETTINGS: chan_settings <command> <type> <nick> <uhost> <handle> <chan> <text>
+##  Checks the idle, logs etc. and updates
+proc chan_settings {command type nick uhost handle chan text} {
+  global set chaninfo
+  set type [string tolower $type]
+  set command [string tolower $command]
+  set text [charstrip [string tolower $text]]
+  if {$type == "c" && $command != "info"} {
+    set chaninfo([string tolower $chan],idle) [unixtime]
+  }
+  if {[level $handle $chan] >= "200" && $type != "-"} {
+    set chaninfo([string tolower $chan],manseen) [unixtime]
+  }
+  if {$type == "-"} {
+    return
+  }
+  if {$type == "c"} {
+    set type +
+  } else {
+    set type ""
+  }
+  if {[chaninfo $chan reportlog]} {
+    write $set(data.dir)/[string tolower $chan].logfile "\[[ctime [unixtime]] $set(timezone)\] ($handle) $nick!$uhost $type$command $chan $text"
+  }
+}
+
+### WRITE: write <filename> <text>
+##  Writes 'text' to the 'filename' at the end of the line (this works in windows)
+proc write {file text} {
+  set wfile [open $file "RDWR CREAT"]
+  while {![eof $wfile]} {
+    set line [gets $wfile]
+  }
+  puts $wfile $text
+  close $wfile
+}
+
+### NOTIFY_SEND: notify_send
+##  Sends the message to the server to see if people are online
+proc notify_send {} {
+  global botnick
+  putquick "ISON :$botnick [userlist]"
+}
+
+### NOTIFY: notify <nickname>
+##  Returns if a nickname is online or not from notify list
+proc notify {nick} {
+  global notify
+  if {![info exists notify([string tolower $nick])]} {
+    return 0
+  } else {
+    return $notify([string tolower $nick])
+  }
+}
+
+### READR: readr <filename>
+##  Just reads a random line of the filename
+proc readr {file} {
+  if {![file isfile $file]} {
+    return
+  }
+  set lines 0
+  set rfile [open $file RDONLY]
+  while {![eof $rfile]} {
+    incr lines 1
+    gets $rfile
+  }
+  close $rfile
+  set line [rand $lines]
+  set lines 0
+  set rfile [open $file RDONLY]
+  while {![eof $rfile]} {
+    incr lines 1
+    if {$lines == $line} {
+      set line [gets $rfile]
+      close $rfile
+      return $line
+    }
+    gets $rfile
+  }
+  close $rfile
+}
+
+### WRITEFILE: writefile <filename> <topic> <value>
+##  Write's to a file similar to ini files but not as in depth. Used only for addon scripts in non-Windows based
+proc writefile {file topic value} {
+  set rfile [open $file "RDONLY CREAT"]
+  set wfile [open $file~wr "WRONLY CREAT"]
+  set no 0
+  set line [gets $rfile]
+  while {![eof $rfile]} {
+    if {[string match [string tolower $topic]==* [string tolower $line]]} {
+      set no 1
+      puts $wfile $topic==$value
+      set line [gets $rfile]
+    } else {
+      puts $wfile $line
+      set line [gets $rfile]
+    }
+  }
+  if {!$no} {
+    puts $wfile $topic==$value
+  }
+  close $rfile
+  close $wfile
+  exec mv $file~wr $file
+}
+
+### READFILE: readfile <filename> <topic>
+##  Read's from a file similar to ini files but not as in depth. Used only for addon scripts
+proc readfile {file topic} {
+  if {![file isfile $file]} { return }
+  set rfile [open $file RDONLY]
+  set line [gets $rfile]
+  while {![eof $rfile]} {
+    if {[string match [string tolower $topic]==* [string tolower $line]]} {
+      close $rfile
+      return [string trimleft [string trimleft [string tolower $line] [string tolower $topic]] ==]
+    }
+    set line [gets $rfile]
+  }
+  close $rfile
+}
+
+### REMFILE: remfile <filename> <topic>
+##  Remove's a topic from a file similar to ini files but not as in depth. Used only for addon scripts in non-Windows based
+proc remfile {file topic} {
+  if {![file isfile $file]} { return }
+  set rfile [open $file RDONLY]
+  set wfile [open $file~wr "WRONLY CREAT"]
+  set line [gets $rfile]
+  while {![eof $rfile]} {
+    if {![string match [string tolower $topic]==* [string tolower $line]]} {
+      puts $wfile $line
+      set line [gets $rfile]
+    } else {
+      set line [gets $rfile]
+    }
+  }
+  close $rfile
+  close $wfile
+  exec mv $file~wr $file
+}
+
+### GETBANREASON: getbanreason <channel> <banmask>
+##  Returns the ban reason for the banmask on the channel
+proc getbanreason {chan ban} {
+  if {[getuser &banlist& XTRA $chan,$ban] == ""} {
+    return "You are banned"
+  } else {
+    return [getuser &banlist& XTRA $chan,$ban]
+  }
+}
+
+### SCRIPT_ERROR: script_error <procedure> <error message>
+##  Reports errors to home channel and partyline
+proc script_error {proc error} {
+  if {$error != "need op"} {
+    putlog "> error ;$proc; '$error'"
+    homechan ">> error ;$proc; '$error'"
+    write debug.log "\[[ctime [unixtime]]\] ($proc): $error"
+  }
+}
+
+### *_ERROR: *_error <procedure> [<other shit that goes with..>]
+##  Below this is for every command used in this script to search for bugs
+
+proc kick_error {proc nick uhost handle chan victim reason} {
+  if {[catch {$proc $nick $uhost $handle $chan $victim $reason} error]} {
+    script_error $proc $error
+  }
+}
+
+proc kick_error {proc nick uhost handle chan victim reason} {
+  if {[catch {$proc $nick $uhost $handle $chan $victim $reason} error]} {
+    script_error $proc $error
+  }
+}
+
+proc pub_error {proc nick uhost handle chan text} {
+  if {[catch {$proc $nick $uhost $handle $chan $text} error]} {
+    script_error $proc $error
+  }
+}
+
+proc pubm_error {proc nick uhost handle chan text} {
+  if {[catch {$proc $nick $uhost $handle $chan $text} error]} {
+    script_error $proc $error
+  }
+}
+
+proc join_error {proc nick uhost handle chan} {
+  if {[catch {$proc $nick $uhost $handle $chan} error]} {
+    script_error $proc $error
+  }
+}
+
+proc part_error {proc nick uhost handle chan} {
+  if {[catch {$proc $nick $uhost $handle $chan} error]} {
+    script_error $proc $error
+  }
+}
+
+proc sign_error {proc nick uhost handle chan reason} {
+  if {[catch {$proc $nick $uhost $handle $chan $reason} error]} {
+    script_error $proc $error
+  }
+}
+
+proc topc_error {proc nick uhost handle chan topic} {
+  if {[catch {$proc $nick $uhost $handle $chan $topic} error]} {
+    script_error $proc $error
+  }
+}
+
+proc kick_error {proc nick uhost handle chan victim reason} {
+  if {[catch {$proc $nick $uhost $handle $chan $victim $reason} error]} {
+    script_error $proc $error
+  }
+}
+
+proc nick_error {proc nick uhost handle chan newnick} {
+  if {[catch {$proc $nick $uhost $handle $chan $newnick} error]} {
+    script_error $proc $error
+  }
+}
+
+proc mode_error {proc nick uhost handle chan mode victim} {
+  if {[catch {$proc $nick $uhost $handle $chan $mode $victim} error]} {
+    script_error $proc $error
+  }
+}
+
+proc msg_error {proc nick uhost handle text} {
+  if {[catch {$proc $nick $uhost $handle $text} error]} {
+    script_error $proc $error
+  }
+}
+
+proc msgm_error {proc nick uhost handle text} {
+  if {[catch {$proc $nick $uhost $handle $text} error]} {
+    script_error $proc $error
+  }
+}
+
+proc notc_error {proc nick uhost handle text} {
+  if {[catch {$proc $nick $uhost $handle $text} error]} {
+    script_error $proc $error
+  }
+}
+
+proc dcc_error {proc handle idx text} {
+  if {[catch {$proc $handle $idx $text} error]} {
+    script_error $proc $error
+  }
+}
+
+proc raw_error {proc server num text} {
+  if {[catch {$proc $server $num $text} error]} {
+    script_error $proc $error
+  }
+}
+
+proc evnt_error {proc type} {
+  if {[catch {$proc $type} error]} {
+    script_error $proc $error
+  }
+}

@@ -1,0 +1,59 @@
+###
+# Usage: /msg botnick deluser [<channel>] <nick1> [<nick2> <nick3> ..]
+###
+
+### DELUSER:
+bind msg - deluser {msg_error msg_deluser}
+bind pub - $set(cmd)deluser {pub_error pub_deluser}
+
+### CHANNEL:
+proc pub_deluser {nick uhost handle chan text} {
+  if {[validuser $handle]} {
+    all_deluser c $nick $uhost $handle $chan $text
+  }
+}
+    
+### QUERY:
+proc msg_deluser {nick uhost handle text} {
+  if {![validuser $handle]} {
+    return
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: Wheres the channel name?"
+  } elseif {![string match #* [lindex $text 0]]} {
+    notice $nick $handle "Invalid request: [lindex $text 0] is not a channel"
+  } else {
+    all_deluser m $nick $uhost $handle [lindex $text 0] [lrange $text 1 end]
+  }
+}
+
+### MAIN:
+proc all_deluser {type nick uhost handle chan text} {
+  global set botnick
+  chan_settings deluser $type $nick $uhost $handle $chan $text
+  if {![auth_check $nick $uhost $handle $chan] || [level $handle $chan] == "0"} {
+    return
+  } elseif {![validchan $chan]} {
+    notice $nick $handle "Invalid request: $chan is not a valid channel"
+  } elseif {[string tolower $type] == "c" && [chaninfo $chan nochanmsg]} {
+    notice $nick $handle "`commands have been disabled for $chan"
+  } elseif {[level $handle $chan] < [readfile $set(script.dir)/$set(com.file) deluser]} {
+    notice $nick $handle "Your level of [level $handle $chan] is less then the required [readfile $set(script.dir)/$set(com.file) deluser] for this command"
+  } elseif {[lindex $text 0] == ""} {
+    notice $nick $handle "Invalid request: What nick are you deleting?"
+  } else {
+    foreach u $text {
+      if {[level $u $chan] == "0"} {
+        notice $nick $handle "$u is not currently in the $chan database"
+      } elseif {[level $u $chan] == [level $handle $chan]} {
+        notice $nick $handle "$u's level of [level $u $chan] in $chan is currently equal to your level of [level $handle $chan]"
+      } elseif {[level $u $chan] > [level $handle $chan]} {
+        notice $nick $handle "$u's level of [level $u $chan] in $chan is currently higher than your level of [level $handle $chan]"
+      } else {
+        -user $u $chan
+        notice $nick $handle "Removed $u's access from $chan"
+      }
+    }
+    putcmdlog "> !$handle! ($nick!$uhost) DELUSER\[$type\] ($chan): $text"
+    homechan "\[$handle\]($nick!$uhost) deleted (tried to delete) these people from $chan: $text"
+  }
+}
