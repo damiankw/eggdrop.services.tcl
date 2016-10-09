@@ -14,7 +14,7 @@ proc serv_nickopauth {nick uhost handle text} {
   global set
   if {$set(nickpass) == ""} {
     putlog "> Attempted to authenticate to $set(nickserv) but no password set..."
-  } elseif {[string tolower $set(nickserv)] == [string tolower $nick] || [string tolower $set(noteop)] == [string tolower $nick] || [string tolower $set(chanserv)] == [string tolower $nick]} {
+  } elseif {[string tolower $set(nickserv)] == [string tolower $nick] || [string tolower $set(noteserv)] == [string tolower $nick] || [string tolower $set(chanserv)] == [string tolower $nick]} {
     putquick "$set(nickcmd) $set(nickserv) :identify $set(nickpass)"
     putlog "> $nick ($uhost) requested authentication... auto-authenticating"
   } else {
@@ -48,34 +48,34 @@ set set(tempnote) ""
 set set(tempcnote) ""
 proc serv_notes {nick uhost handle text} {
   global set
-  if {[string tolower $set(noteop)] == [string tolower $nick]} {
+  if {[string tolower $set(noteserv)] == [string tolower $nick]} {
     if {[string match "You just received a note from *. /msg NoteOP read *" $text]} {
-      msg $set(noteop) "READ [string trimright [lindex $text 10] ]"
+      msg $set(noteserv) "READ [string trimright [lindex $text 10] ]"
       putlog "> Recieved NoteOP from [lindex $text 6] -> Continuing to send to Level 200 Operators"
     } elseif {[string match "You just received a channel note from *. /msg NoteOP read *" $text]} {
-      msg $set(noteop) "READ [string trimright [lindex $text 11] ]"
+      msg $set(noteserv) "READ [string trimright [lindex $text 11] ]"
       putlog "> Recieved NoteOP [lindex $text 7] -> Continuing to send to Level 200 Operators"
     } elseif {[string match "Note * from * -- Sent *" $text]} {
       set set(tempnote) "[string trim [lindex $text 3] ] {[string trim [lrange $text 6 end] ]}"
     } elseif {[string match "* -> * *min: * max: *: *" $text]} {
       set set(tempcnote) "([lindex $set(tempcnote) 1]) $text"
       if {[string length $set(tempcnote)] > "340"} {
-        msg $set(noteop) "SEND $set(owner) [letters $set(tempcnote) 340 1] \[+ More\]"
-        msg $set(noteop) "SEND $set(owner) \[cont >\] [letters $set(tempcnote) 340 0]"
+        msg $set(noteserv) "SEND $set(owner) [letters $set(tempcnote) 340 1] \[+ More\]"
+        msg $set(noteserv) "SEND $set(owner) \[cont >\] [letters $set(tempcnote) 340 0]"
       } else {
-        msg $set(noteop) "SEND $set(owner) $set(tempcnote)"
+        msg $set(noteserv) "SEND $set(owner) $set(tempcnote)"
       }
       set set(tempcnote) ""
     } elseif {[string match "You have a total of * note* (* unread, * read, * other)" $text]} {
       putlog "> NoteOP says I have [string trimleft [lindex $text 7] (] new messages. -> Continueing to see what they are!"
-      msg $set(noteop) "READ new"
+      msg $set(noteserv) "READ new"
     } elseif {$set(tempnote) != ""} {
       set set(tempnote) "([lindex $set(tempnote) 1]) [lindex $set(tempnote) 0] -> $text"
       if {[string length $set(tempnote)] > "340"} {
-        msg $set(noteop) "SEND $set(owner) [letters $set(tempnote) 340 1] \[+ More\]"
-        msg $set(noteop) "SEND $set(owner) \[cont >\] [letters $set(tempnote) 340 0]"
+        msg $set(noteserv) "SEND $set(owner) [letters $set(tempnote) 340 1] \[+ More\]"
+        msg $set(noteserv) "SEND $set(owner) \[cont >\] [letters $set(tempnote) 340 0]"
       } else {
-        msg $set(noteop) "SEND $set(owner) $set(tempnote)"
+        msg $set(noteserv) "SEND $set(owner) $set(tempnote)"
       }
       set set(tempnote) ""
     }

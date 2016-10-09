@@ -975,8 +975,8 @@ proc getinfo {} {
   set set(nickserv) [gets $rfile]
   set set(nickusemsg) [gets $rfile]
   set set(nickghost) [gets $rfile]
-  set set(chanop) [gets $rfile]
-  set set(noteop) [gets $rfile]
+  set set(chanserv) [gets $rfile]
+  set set(noteserv) [gets $rfile]
   set set(servermode) [gets $rfile]
   set set(chanmode) [gets $rfile]
   set set(twomode) [gets $rfile]
@@ -1025,8 +1025,8 @@ proc setinfo {{var &NA&} {value &NA&}} {
   puts $wfile $set(nickserv)
   puts $wfile $set(nickusemsg)
   puts $wfile $set(nickghost)
-  puts $wfile $set(chanop)
-  puts $wfile $set(noteop)
+  puts $wfile $set(chanserv)
+  puts $wfile $set(noteserv)
   puts $wfile $set(servermode)
   puts $wfile $set(chanmode)
   puts $wfile $set(twomode)
