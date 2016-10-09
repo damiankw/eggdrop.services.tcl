@@ -723,7 +723,11 @@ proc check_settings {} {
   }
   putlog "> Authenticating to Nickname service..."
   if {$set(nickpass) != ""} {
-    msg $set(nickopi) "identify $set(nickpass)"
+    if {$set(nickusemsg)} {
+      msg $set(nickserv) "identify $set(nickpass)"
+    } else {
+      putquick "$set(nickserv) "identify $set(nickpass)"
+    }
   }
   putlog "> Checking socket settings..."
   if {$set(sockcommand)} {
@@ -968,8 +972,9 @@ proc getinfo {} {
   set set(quickban.file) [gets $rfile]
   set set(topics.file) [gets $rfile]
   set set(8ball.file) [gets $rfile]
-  set set(nickop) [gets $rfile]
-  set set(nickopi) [gets $rfile]
+  set set(nickserv) [gets $rfile]
+  set set(nickusemsg) [gets $rfile]
+  set set(nickghost) [gets $rfile]
   set set(chanop) [gets $rfile]
   set set(noteop) [gets $rfile]
   set set(servermode) [gets $rfile]
@@ -1017,8 +1022,9 @@ proc setinfo {{var &NA&} {value &NA&}} {
   puts $wfile $set(quickban.file)
   puts $wfile $set(topics.file)
   puts $wfile $set(8ball.file)
-  puts $wfile $set(nickop)
-  puts $wfile $set(nickopi)
+  puts $wfile $set(nickserv)
+  puts $wfile $set(nickusemsg)
+  puts $wfile $set(nickghost)
   puts $wfile $set(chanop)
   puts $wfile $set(noteop)
   puts $wfile $set(servermode)
