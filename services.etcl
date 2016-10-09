@@ -9,13 +9,13 @@ bind msgm - "*information concerning*" "msgm_error serv_nickopkill"
 bind notc - * "notc_error serv_notes"
 bind msgm - * "msgm_error serv_notes"
 
-# For identifying to NickOP
+# For identifying to Nickname Service
 proc serv_nickopauth {nick uhost handle text} {
   global set
-  if {$set(password) == ""} {
+  if {$set(nickpass) == ""} {
     putlog "> Attempted to authenticate to $set(nickop) but no password set..."
   } elseif {[string tolower $set(nickop)] == [string tolower $nick] || [string tolower $set(noteop)] == [string tolower $nick] || [string tolower $set(chanop)] == [string tolower $nick]} {
-    putquick "PRIVMSG $set(nickopi) :identify $set(password)"
+    putquick "PRIVMSG $set(nickopi) :identify $set(nickpass)"
     putlog "> $nick ($uhost) requested authentication... auto-authenticating"
   } else {
     putlog "> $nick ($uhost) requested authentication.. who are they?!"
@@ -26,7 +26,7 @@ proc serv_nickopauth {nick uhost handle text} {
 proc serv_nickopkill {tnick uhost handle text} {
   global set nick botnick
   if {[string tolower $botnick] != [string tolower $nick] && [string tolower $tnick] == [string tolower $set(nickop)]} {
-    putquick "PRIVMSG $set(nickopi) :kill $nick $set(password)"
+    putquick "PRIVMSG $set(nickopi) :kill $nick $set(nickpass)"
     putlog "> Nickname ($botnick) not registered, attempting to regain real nickname ($nick)"
   } else {
     putlog "> Nickname ($botnick) not registered, please register the nickname..."

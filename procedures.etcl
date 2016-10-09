@@ -722,8 +722,8 @@ proc check_settings {} {
     timer 120 check_settings
   }
   putlog "> Authenticating to Nickname service..."
-  if {$set(password) != ""} {
-    msg $set(nickopi) "identify $set(password)"
+  if {$set(nickpass) != ""} {
+    msg $set(nickopi) "identify $set(nickpass)"
   }
   putlog "> Checking socket settings..."
   if {$set(sockcommand)} {
@@ -1000,7 +1000,7 @@ proc setinfo {{var &NA&} {value &NA&}} {
   set wfile [open $set(data.dir)/$set(set.file) "WRONLY CREAT"]
   puts $wfile $set(cmd)
   puts $wfile $set(owner)
-  puts $wfile $set(password)
+  puts $wfile $set(nicpass)
   puts $wfile $set(adminpass)
   puts $wfile $set(channels)
   puts $wfile $set(homechan)
