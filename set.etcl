@@ -59,16 +59,16 @@ proc all_set {type nick uhost handle chan text} {
     } elseif {($option == "keeptopic" || $option == "nonote" || $option == "restrict") && $value > [level $handle $chan]} {
       notice $nick $handle "Invalid request: Can't set a level higher than your own"
     } elseif {($option == "keeptopic" || $option == "nonote" || $option == "restrict") && [changet $chan $option] > [level $handle $chan]} {
-      notice $nick $handle "The current level of [changet $chan $option] for $optionmsg exceeds your level of [level $handle $chan]"
+      notice $nick $handle "The current level of \002[changet $chan $option]\002 for \002$optionmsg\002 exceeds your level of [level $handle $chan]"
     } elseif {$option == "keeptopic" || $option == "nonote" || $option == "restrict"} {
       chanset $chan $option $value
-      notice $nick $handle "Setting for '$optionmsg' now set to $value for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \002$value\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
     } elseif {($option == "mustid" || $option == "tellpeak" || $option == "tellset" || $option == "telladd" || $option == "telldel" || $option == "tellsetu" || $option == "nochanmsg" || $option == "funmsg") && ($value == "on" || $value == "off")} {
       chanset $chan $option [change $value 10]
-      notice $nick $handle "Setting for '$optionmsg' now set to $value for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \002$value\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
@@ -76,7 +76,7 @@ proc all_set {type nick uhost handle chan text} {
       notice $nick $handle "Invalid request: $value"
     } elseif {$option == "url"} {
       chanset $chan $option $value
-      notice $nick $handle "Setting for 'URL' now set to $value for $chan"
+      notice $nick $handle "Setting for '\002URL\002' now set to \002$value\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
@@ -86,7 +86,7 @@ proc all_set {type nick uhost handle chan text} {
       notice $nick $handle "Invalid request: [lindex [changet $chan owner] 0] (first owner) hasn't set an e-mail address, cannot enable report log setting"
     } elseif {$option == "log" && ($value == "on" || $value == "off")} {
       chanset $chan reportlog [change $value 10]
-      notice $nick $handle "Setting for '$optionmsg' now set to $value for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \002$value\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
@@ -94,7 +94,7 @@ proc all_set {type nick uhost handle chan text} {
       notice $nick $handle "Invalid request: $value"
     } elseif {($option == "quota" || $option == "banquota") && ($value == "off" || $value == "0")} {
       chanset $chan $option 0
-      notice $nick $handle "Setting for '$optionmsg' now set to off for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \002off\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
@@ -102,13 +102,13 @@ proc all_set {type nick uhost handle chan text} {
       notice $nick $handle "Invalid request: $value"
     } elseif {$option == "quota" || $option == "banquota"} {
       chanset $chan $option $value
-      notice $nick $handle "Setting for '$optionmsg' now set to $value for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \002$value\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
     } elseif {$option == "owner"} {
       chanset $chan $option $value
-      notice $nick $handle "Setting for '$optionmsg' now set to $value for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \002$value\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
@@ -118,7 +118,7 @@ proc all_set {type nick uhost handle chan text} {
       notice $nick $handle "Invalid request: Can't set a level higher than your own"
     } elseif {$option == "access" && [lindex $text 2] == ""} {
       chanset $chan accessall "$value 5"
-      notice $nick $handle "Setting for 'access limit' now set to $value 5 for $chan"
+      notice $nick $handle "Setting for '\002access limit\002' now set to \002$value 5\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
@@ -126,7 +126,7 @@ proc all_set {type nick uhost handle chan text} {
       notice $nick $handle "Invalid request: $value"
     } elseif {$option == "access"} {
       chanset $chan accessall "$value [lindex $text 2]"
-      notice $nick $handle "Setting for 'access limit' now set to $value [lindex $text 2] for $chan"
+      notice $nick $handle "Setting for '\002access limit\002' now set to \002$value [lindex $text 2]\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
@@ -134,19 +134,19 @@ proc all_set {type nick uhost handle chan text} {
       notice $nick $handle "Invalid request: $value"
     } elseif {$option == "hash"} {
       chanset $chan hash $value
-      notice $nick $handle "Setting for '$optionmsg' now set to $value for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \002$value\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
     } elseif {$option == "oprestrict" && $value == "on"} {
       chanset $chan $option 100
-      notice $nick $handle "Setting for '$optionmsg' now set to 100 for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \002100\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
     } elseif {$option == "oprestrict" && $value == "off"} {
       chanset $chan $option 0
-      notice $nick $handle "Setting for '$optionmsg' now set to 0 for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \0020\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
@@ -154,14 +154,14 @@ proc all_set {type nick uhost handle chan text} {
       notice $nick $handle "Invalid request: $value"
     } elseif {$option == "oprestrict"} {
       chanset $chan $option $value
-      notice $nick $handle "Setting for '$optionmsg' now set to $value for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \002$value\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to $value"
       }
     } elseif {$option == "mode" && (![isnum $value] || $value < "0" || [string match *.* $value])} {
       notice $nick $handle "Invalid request: $value"
     } elseif {$option == "mode" && [level $handle $chan] < [lindex [changet $chan modelock] 0]} {
-      notice $nick $handle "The current level of [lindex [changet $chan modelock] 0] for $optionmsg exceeds your level of [level $handle $chan]"
+      notice $nick $handle "The current level of \002[lindex [changet $chan modelock] 0]\002 for \002$optionmsg\002 exceeds your level of [level $handle $chan]"
     } elseif {$option == "mode" && [level $handle $chan] < $value} {
       notice $nick $handle "Invalid request: Can't set a level higher than your own"
     } elseif {$option == "mode" && [lindex $text 2] == ""} {
@@ -214,7 +214,7 @@ proc all_set {type nick uhost handle chan text} {
         }
       }
       chanset $chan modelock "$value +$mp-$mn $mo"
-      notice $nick $handle "Setting for '$optionmsg' now set to [lrange [changet $chan modelock] 1 end] to level $value for $chan"
+      notice $nick $handle "Setting for '\002$optionmsg\002' now set to \002[lrange [changet $chan modelock] 1 end]\002 to level \002$value\002 for \002$chan\002"
       if {[changet $chan tellset]} {
         noteownersend $chan "($handle) $nick!$uhost changes setting $optionmsg on $chan to [lrange [changet $chan modelock] 1 end]"
       }

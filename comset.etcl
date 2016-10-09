@@ -48,11 +48,11 @@ proc all_comset {type nick uhost handle chan text} {
     } elseif {[readfile $set(data.dir)/[file_change $chan].com $command] == ""} {
       notice $nick $handle "Invalid request: $command doesn't seem to be a valid command on $chan"
     } elseif {[comget $chan $command] > [level $handle $chan]} {
-      notice $nick $handle "The current level of [comget $chan $command] for $command exceeds your level [level $handle $chan]"
+      notice $nick $handle "The current level of \002[comget $chan $command]\002 for \002$command\002 exceeds your level [level $handle $chan]"
     } elseif {![isnum $value] || $value > "200" || $value < "0"} {
       notice $nick $handle "Invalid request: The valid levels are between 0-200"
     } else {
-      notice $nick $handle "Command level for '$command' on $chan now set to '$value' from '[comget $chan $command]'"
+      notice $nick $handle "Command level for '\002$command\002' on \002$chan\002 now set to '\002$value\002' from '\002[comget $chan $command]\002'"
       writefile $set(data.dir)/[file_change $chan].com $command $value
     }
   }

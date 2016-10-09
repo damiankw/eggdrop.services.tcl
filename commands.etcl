@@ -51,14 +51,14 @@ proc all_commands {type nick uhost handle chan text} {
       }
     }
     set cnt 200
-    notice $nick $handle "*** Channel commands on $chan for $handle \[Level: [level $handle $chan]\] ***"
+    notice $nick $handle "\002***\002 Channel commands on $chan for $handle \[Level: [level $handle $chan]\] \002***\002"
     while {$cnt >= "0"} {
       if {[info exists tmp($cnt)] && [level $handle $chan] >= $cnt} {
         notice $nick $handle "[align $cnt 3 " " R]: $tmp($cnt)"
       }
       set cnt [expr $cnt - 1]
     }
-    notice $nick $handle "*** End of List ***"
+    notice $nick $handle "\002***\002 End of List \002***\002"
     putcmdlog "> !$handle! ($nick!$uhost) COMMANDS\[$type\] ($chan)"
   }
 }

@@ -72,8 +72,8 @@ proc all_seek {type nick uhost handle chan text} {
       notice $nick $handle "Completed: $cnt people online"
     } else {
       notice $nick $handle "Completed: $cnt people recieved your message"
-      notice $n_ntc "" "Seek to $chan from $nick: $text"
-      msg $n_msg "Seek to $chan from $nick: $text"
+      notice $n_ntc "" "\002Seek\002 to $chan from $nick: $text"
+      msg $n_msg "\002Seek\002 to $chan from $nick: $text"
     }
   }
 }

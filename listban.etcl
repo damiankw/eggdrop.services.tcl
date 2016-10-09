@@ -91,8 +91,8 @@ proc all_listban {type nick uhost handle chan text} {
     }
     set cn 0
     set mt 0
-    notice $nick $handle "*** $chan Ban List (Matching $ma) \[Min: [align $mn 3] Max: [align $mx 3]\] ***"
-    notice $nick $handle "     Ban mask                            Level Expires      "
+    notice $nick $handle "\002***\002 $chan Ban List (Matching $ma) \[Min: [align $mn 3] Max: [align $mx 3]\] \002***\002"
+    notice $nick $handle "\002    \002 Ban mask                            Level Expires      "
     if {[llength [banlist $chan]] == "0"} {
       set mt 1
       notice $nick $handle "There are no permanent bans for this channel"
@@ -128,7 +128,7 @@ proc all_listban {type nick uhost handle chan text} {
         } else {
           set b_exp "[ctime $b_exp] $set(timezone)"
         }
-        notice $nick $handle "[align $cn 4] [align $b_mask 35] [align $b_lev 5] $b_exp"
+        notice $nick $handle "\002[align $cn 4]\002 [align $b_mask 35] [align $b_lev 5] $b_exp"
         if {$la} {
           notice $nick $handle "LASTON $b_last"
         }
@@ -145,10 +145,10 @@ proc all_listban {type nick uhost handle chan text} {
       }
     }
     if {!$mt} {
-      notice $nick $handle "No bans found matching $ma"
+      notice $nick $handle "No bans found matching \002$ma\002"
     }
-    notice $nick $handle "*** End of banlist. Use switches -whoset -whenset -lastactive -reason for more information ***"
-    notice $nick $handle "*** End of List ***"
+    notice $nick $handle "\002***\002 End of banlist. Use switches -whoset -whenset -lastactive -reason for more information \002***\002"
+    notice $nick $handle "\002***\002 End of List \002***\002"
     putcmdlog "> !$handle! ($nick!$uhost) LISTBAN\[$type\] ($chan) $text"
   }
 }
@@ -218,8 +218,8 @@ proc dcc_listban {handle idx text} {
     }
     set cn 0
     set mt 0
-    putdcc $idx "*** $chan Ban List (Matching $ma) \[Min: [align $mn 3] Max: [align $mx 3]\] ***"
-    putdcc $idx "     Ban mask                            Level Expires      "
+    putdcc $idx "\002***\002 $chan Ban List (Matching $ma) \[Min: [align $mn 3] Max: [align $mx 3]\] \002***\002"
+    putdcc $idx "\002    \002 Ban mask                            Level Expires      \002"
     if {[llength [banlist $chan]] == "0"} {
       set mt 1
       putdcc $idx "There are no permanent bans for this channel"
@@ -255,7 +255,7 @@ proc dcc_listban {handle idx text} {
         } else {
           set b_exp "[ctime $b_exp] $set(timezone)"
         }
-        putdcc $idx "[align $cn 4] [align $b_mask 35] [align $b_lev 5] $b_exp"
+        putdcc $idx "\002[align $cn 4]\002 [align $b_mask 35] [align $b_lev 5] $b_exp"
         if {$la} {
           putdcc $idx "LASTON $b_last"
         }
@@ -272,9 +272,9 @@ proc dcc_listban {handle idx text} {
       }
     }
     if {!$mt} {
-      putdcc $idx "No bans found matching $ma"
+      putdcc $idx "No bans found matching \002$ma\002"
     }
-    putdcc $idx "*** End of banlist. Use switches -whoset -whenset -lastactive -reason for more information ***"
-    putdcc $idx "*** End of List ***"
+    putdcc $idx "\002***\002 End of banlist. Use switches -whoset -whenset -lastactive -reason for more information \002***\002"
+    putdcc $idx "\002***\002 End of List \002***\002"
   }
 }

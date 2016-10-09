@@ -59,7 +59,7 @@ proc all_setuser {type nick uhost handle chan text} {
     } elseif {$command == "level" && ($value > "200" || $value < "1")} {
       notice $nick $handle "Invalid request: Valid levels are between 1 and 200"
     } elseif {$command == "level"} {
-      notice $nick $handle "Level for $nickname on $chan has been set to '$value from [level $nickname $chan]'"
+      notice $nick $handle "\002Level\002 for $nickname on $chan has been set to '\002$value\002 from \002[level $nickname $chan]\002'"
       setuser $nickname XTRA LEVEL($chan) $value
       setuser $nickname XTRA LASTMOD($chan) "[unixtime] $handle $nick!$uhost"
       if {[changet $chan tellsetu]} {
@@ -68,7 +68,7 @@ proc all_setuser {type nick uhost handle chan text} {
     } elseif {$command == "aop" && [level $handle $chan] <= [level $nickname $chan] && [string tolower $handle] != [string tolower $nickname]} {
       notice $nick $handle "$nickname's level of [level $nickname $chan] in $chan is currently higher than or equal to your level of [level $handle $chan]"
     } elseif {$command == "aop" && ([string tolower $value] == "on" || [string tolower $value] == "off")} {
-      notice $nick $handle "AutoOP for $nickname on $chan has been set to '[string tolower $value]'"
+      notice $nick $handle "\002AutoOP\002 for $nickname on $chan has been set to '\002[string tolower $value]\002'"
       setuser $nickname XTRA AOP($chan) [change $value 10]
       setuser $nickname XTRA LASTMOD($chan) "[unixtime] $handle $nick!$uhost"
       if {[changet $chan tellsetu]} {
@@ -77,7 +77,7 @@ proc all_setuser {type nick uhost handle chan text} {
     } elseif {$command == "aov" && [level $handle $chan] <= [level $nickname $chan] && [string tolower $handle] != [string tolower $nickname]} {
       notice $nick $handle "$nickname's level of [level $nickname $chan] in $chan is currently higher than or equal to your level of [level $handle $chan]"
     } elseif {$command == "aov" && ([string tolower $value] == "on" || [string tolower $value] == "off")} {
-      notice $nick $handle "AutoVoice for $nickname on $chan has been set to '[string tolower $value]'"
+      notice $nick $handle "\002AutoVoice\002 for $nickname on $chan has been set to '\002[string tolower $value]\002'"
       setuser $nickname XTRA AOV($chan) [change $value 10]
       setuser $nickname XTRA LASTMOD($chan) "[unixtime] $handle $nick!$uhost"
       if {[changet $chan tellsetu]} {
@@ -86,7 +86,7 @@ proc all_setuser {type nick uhost handle chan text} {
     } elseif {($command == "prot" || $command == "protect") && [level $handle $chan] <= [level $nickname $chan] && [string tolower $handle] != [string tolower $nickname]} {
       notice $nick $handle "$nickname's level of [level $nickname $chan] in $chan is currently higher than or equal to your level of [level $handle $chan]"
     } elseif {($command == "prot" || $command == "protect") && ([string tolower $value] == "on" || [string tolower $value] == "off")} {
-      notice $nick $handle "Protect for $nickname on $chan has been set to '[string tolower $value]'"
+      notice $nick $handle "\002Protect\002 for $nickname on $chan has been set to '\002[string tolower $value]\002'"
       setuser $nickname XTRA PROTECT($chan) [change $value 10]
       setuser $nickname XTRA LASTMOD($chan) "[unixtime] $handle $nick!$uhost"
       if {[changet $chan tellsetu]} {
@@ -95,7 +95,7 @@ proc all_setuser {type nick uhost handle chan text} {
     } elseif {$command == "nickname" && [isspecial $handle] == "0"} {
       notice $nick $handle "Invalid request: Only 'special' users can change nicknames."
     } elseif {$command == "nickname"} {
-      notice $nick $handle "NickName for $nickname has been changed to '$value'"
+      notice $nick $handle "\002NickName\002 for $nickname has been changed to '\002$value\002'"
       homechan "\[$handle\]($nick!$uhost): changed the nickname of '$nickname' to '$value'."
       chnick $nickname $value
       if {[changet $chan tellsetu]} {
@@ -105,7 +105,7 @@ proc all_setuser {type nick uhost handle chan text} {
       notice $nick $handle "$nickname's level of [level $nickname $chan] in $chan is currently higher than or equal to your level of [level $handle $chan]"
     } elseif {$command == "suspend" && ([string tolower $value] == "off" || [string tolower $value] == "0")} {
       -suspend $chan $nickname
-      notice $nick $handle "Suspend for $nickname on $chan has been set to 'off'"
+      notice $nick $handle "\002Suspend\002 for $nickname on $chan has been set to '\002off\002'"
       if {[changet $chan tellsetu]} {
         noteownersend $chan "($handle) $nick!$uhost setuser $nickname $command on $chan"
       }
@@ -125,7 +125,7 @@ proc all_setuser {type nick uhost handle chan text} {
           pushmode $chan -v $user
         }
       }
-      notice $nick $handle "Suspend for $nickname on $chan has been set to '$value minutes'"
+      notice $nick $handle "\002Suspend\002 for $nickname on $chan has been set to '\002$value minutes\002'"
       if {[changet $chan tellsetu]} {
         noteownersend $chan "($handle) $nick!$uhost setuser $nickname $command on $chan"
       }

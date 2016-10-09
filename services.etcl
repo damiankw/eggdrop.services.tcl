@@ -49,15 +49,15 @@ set set(tempcnote) ""
 proc serv_notes {nick uhost handle text} {
   global set
   if {[string tolower $set(noteserv)] == [string tolower $nick]} {
-    if {[string match "You just received a note from *. /msg NoteOP read *" $text]} {
-      msg $set(noteserv) "READ [string trimright [lindex $text 10] ]"
+    if {[string match "You just received a note from *. \002/msg NoteOP read *\002" $text]} {
+      msg $set(noteserv) "READ [string trimright [lindex $text 10] \002]"
       putlog "> Recieved NoteOP from [lindex $text 6] -> Continuing to send to Level 200 Operators"
-    } elseif {[string match "You just received a channel note from *. /msg NoteOP read *" $text]} {
-      msg $set(noteserv) "READ [string trimright [lindex $text 11] ]"
+    } elseif {[string match "You just received a channel note from *. \002/msg NoteOP read *\002" $text]} {
+      msg $set(noteserv) "READ [string trimright [lindex $text 11] \002]"
       putlog "> Recieved NoteOP [lindex $text 7] -> Continuing to send to Level 200 Operators"
-    } elseif {[string match "Note * from * -- Sent *" $text]} {
-      set set(tempnote) "[string trim [lindex $text 3] ] {[string trim [lrange $text 6 end] ]}"
-    } elseif {[string match "* -> * *min: * max: *: *" $text]} {
+    } elseif {[string match "Note * from \002*\002 -- Sent \002*" $text]} {
+      set set(tempnote) "[string trim [lindex $text 3] \002] {[string trim [lrange $text 6 end] \002]}"
+    } elseif {[string match "* \002-> *\002 *min: * max: *: *\002" $text]} {
       set set(tempcnote) "([lindex $set(tempcnote) 1]) $text"
       if {[string length $set(tempcnote)] > "340"} {
         msg $set(noteserv) "SEND $set(owner) [letters $set(tempcnote) 340 1] \[+ More\]"

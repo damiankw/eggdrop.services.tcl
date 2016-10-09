@@ -43,6 +43,6 @@ proc all_8ball {type nick uhost handle chan text} {
   } elseif {[lindex $text 0] == ""} {
     notice $nick $handle "Invalid request: What question did you want to ask? :)"
   } else {
-    msg $chan "8ball: $text?? [readr $set(data.dir)/$set(8ball.file)]"
+    msg $chan "\0028ball\002: $text?? [readr $set(data.dir)/$set(8ball.file)]"
   }
 }

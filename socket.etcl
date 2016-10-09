@@ -57,7 +57,7 @@ proc socket_command {idx text} {
       if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
         if {[llength [notelist $handle new]] > "0"} {
           putdcc $idx "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read)"
-          putdcc $idx "Type: /msg $botnick list or /msg $botnick list new"
+          putdcc $idx "Type: \002/msg $botnick list\002 or \002/msg $botnick list new\002"
         }
         homechan "\[$handle\]($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])): successfully authenticated as '$handle' and userhosts updated"
         putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) AUTH\[s\] \[passed/userhosts updated\]"
@@ -74,7 +74,7 @@ proc socket_command {idx text} {
     if {($command == "" && [nickinfo $handle auth]) || ![nickinfo $handle auth]} {
       if {[llength [notelist $handle new]] > "0"} {
         putdcc $idx "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read)"
-        putdcc $idx "Type: /msg $botnick list or /msg $botnick list new"
+        putdcc $idx "Type: \002/msg $botnick list\002 or \002/msg $botnick list new\002"
       }
       homechan "\[$handle\]($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])): successfully authenticated"
       putcmdlog "> !$handle! ($nick![getchanhost $nick] ([lindex [replace [findidx $idx] @ " "] 3])) AUTH\[s\] \[passed\]"

@@ -89,14 +89,14 @@ proc all_adduser {type nick uhost handle chan text} {
     }
     if {![validuser [lindex $text 0]]} {
       newuser [lindex $text 0] $uh [getchanhost [lindex $text 0]]
-      notice $nick $handle "Could not find [lindex $text 0] in user database, adding as '$uh'"
-      notice [lindex $text 0] [lindex $text 0] "You have been added to $botnick. In order to use me you will need to set a password. Do this with: /msg $botnick pass <new password>"
+      notice $nick $handle "Could not find \002[lindex $text 0]\002 in user database, adding as '\002$uh\002'"
+      notice [lindex $text 0] [lindex $text 0] "You have been added to $botnick. In order to use me you will need to set a password. Do this with: \002/msg $botnick pass <new password>\002"
       putcmdlog "> !$handle! ($nick!$uhost) ADDUSER\[$type\]: adding new database user"
       homechan "\[$handle\]($nick!$uhost) added [lindex $text 0] ([lindex $text 0]![getchanhost [lindex $text 0]]) to user database with host: $uh"
     }
     +user [lindex $text 0] $chan $handle $nick!$uhost $lvl $aop $aov $pro $uh
-    notice $nick $handle "Added [lindex $text 0] to channel $chan. Level: $lvl AOP: [change $aop onoff] Protect: [change $pro onoff] AOV: [change $aov onoff]"
-    notice [lindex $text 0] [lindex $text 0] "You have been added to $chan by $nick \[$handle\]. Level: $lvl AOP: [change $aop onoff] Protect: [change $pro onoff] AOV: [change $aov onoff]"
+    notice $nick $handle "Added \002[lindex $text 0]\002 to channel \002$chan\002. Level: \002$lvl\002 AOP: \002[change $aop onoff]\002 Protect: \002[change $pro onoff]\002 AOV: \002[change $aov onoff]\002"
+    notice [lindex $text 0] [lindex $text 0] "You have been added to \002$chan\002 by \002$nick\002 \[$handle\]. Level: \002$lvl\002 AOP: \002[change $aop onoff]\002 Protect: \002[change $pro onoff]\002 AOV: \002[change $aov onoff]\002"
     putcmdlog "> !$handle! ($nick!$uhost) ADDUSER\[$type\] ($chan): NickName:\[[lindex $text 0]\] AOP:\[[change $aop onoff]\] AOV:\[[change $aov onoff]\] PROTECT:\[[change $pro onoff]\]"
     homechan "\[$handle\]($nick!$uhost) added [lindex $text 0] to channel $chan. Level: $lvl AOP: [change $aop onoff] Protect: [change $pro onoff] AOV: [change $aov onoff] UserHost: $uh"
     if {[changet $chan telladd]} {

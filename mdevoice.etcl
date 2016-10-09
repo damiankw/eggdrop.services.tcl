@@ -42,7 +42,7 @@ proc all_mdevoice {type nick uhost handle chan text} {
     notice $nick $handle "I am not currently an operator in $chan."
     putlog "> \[ERROR\] !$handle! ($nick!$uhost) i need operator status for mdevoice"
   } else {
-    msg $chan "MassDevoice requested by $nick"
+    msg $chan "MassDevoice requested by \002$nick\002"
     foreach n [chanlist $chan] {
       if {[isvoice $n $chan]} {
         pushmode $chan -v $n

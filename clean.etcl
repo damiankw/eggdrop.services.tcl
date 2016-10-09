@@ -39,7 +39,7 @@ proc all_clean {type nick uhost handle chan text} {
   } elseif {[level $handle $chan] < [comget $chan clean]} {
     notice $nick $handle "Your level of [level $handle $chan] is less then the required [comget $chan clean] for this command"
   } else {
-    msg $chan "Modes cleaned by $nick"
+    msg $chan "Modes cleaned by \002$nick\002"
     set cnt 1
     foreach mode [split [lindex [getchanmode $chan] 0] ""] {
       if {$mode == "+"} {

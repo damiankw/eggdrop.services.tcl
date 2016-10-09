@@ -19,7 +19,7 @@ proc msg_setme {nick uhost handle text} {
     } elseif {![string match *@*.* [lindex $value 0]]} {
       notice $nick $handle "Error: Email address '[lindex $value 0]' is invalid"
     } else {
-      notice $nick $handle "Setting for 'email' now set to [lindex $value 0]"
+      notice $nick $handle "Setting for '\002email\002' now set to \002[lindex $value 0]\002"
       setuser $handle XTRA EMAIL [lindex $value 0]
       putcmdlog "> !$handle! ($nick!$uhost) set email to '[lindex $value 0]'"
     }
@@ -27,19 +27,19 @@ proc msg_setme {nick uhost handle text} {
     if {[string length [lindex $value 0]] < "6" || [string length [lindex $value 0]] > "20"} {
       notice $nick $handle "Please use a password between 6 and 20 characters in length"
     } else {
-      notice $nick $handle "Setting for 'password' now set to [lindex $value 0]"
+      notice $nick $handle "Setting for '\002password\002' now set to \002[lindex $value 0]\002"
       setuser $handle PASS [lindex $value 0]
       putcmdlog "> !$handle ($nick!$uhost) changed their password..."
     }
   } elseif {$command == "url" || $command == "asl"} {
-    notice $nick $handle "Setting for '$command' now set to [lindex $value 0]"
+    notice $nick $handle "Setting for '\002$command\002' now set to \002[lindex $value 0]\002"
     setuser $handle XTRA [string toupper $command] [lindex $value 0]
     putcmdlog "> !$handle ($nick!$uhost) set $command to '[lindex $value 0]'"
   } elseif {$command == "usemsg"} {
     if {[string tolower [lindex $value 0]] != "on" && [string tolower [lindex $value 0]] != "off"} {
       notice $nick $handle "Invalid request: Use ON/OFF only"
     } else {
-      notice $nick $handle "Setting for '$command' now set to [string tolower [lindex $value 0]]"
+      notice $nick $handle "Setting for '\002$command\002' now set to \002[string tolower [lindex $value 0]]\002"
       setuser $handle XTRA INTERFACE [change [lindex $value 0] 10]
       putcmdlog "> !$handle ($nick!$uhost) set interface to '[lindex $value 0]'"
     }
@@ -47,7 +47,7 @@ proc msg_setme {nick uhost handle text} {
     if {[string tolower [lindex $value 0]] != "on" && [string tolower [lindex $value 0]] != "off"} {
       notice $nick $handle "Invalid request: Use ON/OFF only"
     } else {
-      notice $nick $handle "Setting for '$command' now set to [string tolower [lindex $value 0]]"
+      notice $nick $handle "Setting for '\002$command\002' now set to \002[string tolower [lindex $value 0]]\002"
       setuser $handle XTRA [string toupper $command] [change [lindex $value 0] 10]
       putcmdlog "> !$handle ($nick!$uhost) set $command to '[lindex $value 1]'"
     }

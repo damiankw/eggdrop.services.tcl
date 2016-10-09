@@ -58,7 +58,7 @@ proc action_kick {nick uhost handle chan victim reason} {
       return
     } elseif {[changet $chan oprestrict] > "0" && ([changet $chan oprestrict] > [level $handle $chan] || ![nickinfo $handle auth] || [nickinfo $handle userhost] != $uhost || [level $handle $chan] == "0" || [suspend $handle $chan]) && [string tolower $nick] != [string tolower $botnick] && (![matchattr $handle b] || ![isspecial $handle])} {
       pushmode $chan -o $nick
-      notice $nick $handle "You have not yet authenticated yourself to me: /msg $botnick auth <password>"
+      notice $nick $handle "You have not yet authenticated yourself to me: \002/msg $botnick auth <password>\002"
     } elseif {[level $vichandle $chan] > [level $handle $chan] && [nickinfo $vichandle auth] && [protect $vichandle $chan] && [nickinfo $vichandle userhost] == [getchanhost $victim] && [string tolower $nick] != [string tolower $botnick] && ![matchattr $handle b]} {
       putkick $chan $nick "$victim \[$vichandle\] is a protected channel member"
       homechan "\[$handle\]($nick!$uhost): kicked me from $chan.. attempting to suspend..."

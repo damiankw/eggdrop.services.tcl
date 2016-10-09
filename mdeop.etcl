@@ -42,7 +42,7 @@ proc all_mdeop {type nick uhost handle chan text} {
     notice $nick $handle "I am not currently an operator in $chan."
     putlog "> \[ERROR\] !$handle! ($nick!$uhost) i need operator status for mdeop"
   } else {
-    msg $chan "MassDeop requested by $nick"
+    msg $chan "MassDeop requested by \002$nick\002"
     foreach n [chanlist $chan] {
       if {[isop $n $chan] && [string tolower $n] != [string tolower $botnick]} {
         pushmode $chan -o $n

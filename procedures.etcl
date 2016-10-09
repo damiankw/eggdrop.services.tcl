@@ -1109,7 +1109,7 @@ proc noteownersend {{chan &NA&} {note &NA&}} {
   foreach owner [changet $chan owner] {
     writefile $set(data.dir)/note.[file_change $owner] [unixtime]$owner[rand 9] "[unixtime] U {} $botnick {$note}"
     if {[notify $owner]} {
-      notice $owner $owner "You just received a note from $botnick. /msg $botnick read [llength [notelist $owner]]"
+      notice $owner $owner "You just received a note from $botnick. \002/msg $botnick read [llength [notelist $owner]]\002"
     }
   }
 }

@@ -108,15 +108,15 @@ proc all_access {type nick uhost handle chan text} {
       set ma [nick2hand [lindex $text 1]]
     }
     if {[string tolower [lindex $text 0]] == "-check"} {
-      notice $nick $handle "*** Channel membership list for [lindex $text 1] on $chan ***"
+      notice $nick $handle "\002***\002 Channel membership list for [lindex $text 1] on $chan \002***\002"
     } else {
-      notice $nick $handle "*** $chan Database \[Match(Nick: [lindex $ma 0] Userhost: $ho) Min: [align $mn 3] Max: [align $mx 3]\] ***"
+      notice $nick $handle "\002***\002 $chan Database \[Match(Nick: [lindex $ma 0] Userhost: $ho) Min: [align $mn 3] Max: [align $mx 3]\] \002***\002"
     }
-    notice $nick $handle "      NickName          Level  AOP   AOV   Prot"
+    notice $nick $handle "\002     \002 NickName          Level  AOP   AOV   Prot\002"
     if {[string tolower [lindex $text 0]] == "-check" && [string tolower [lindex $text 1]] == [string tolower $set(chanserv)]} {
       notice $nick $handle "$set(chanserv) doesn't need no access >:)"
     } elseif {[string tolower [lindex $text 0]] == "-check" && [level $ma $chan] > "0"} {
-      notice $nick $handle "1     [align $ma 17] [align [level $ma $chan] 6] [align [change [aop $ma $chan] yesno] 5] [align [change [aov $ma $chan] yesno] 5] [align [change [protect $ma $chan] yesno] 5]"
+      notice $nick $handle "\0021    \002 [align $ma 17] [align [level $ma $chan] 6] [align [change [aop $ma $chan] yesno] 5] [align [change [aov $ma $chan] yesno] 5] [align [change [protect $ma $chan] yesno] 5]"
       if {[suspend $handle $chan]} {
         notice $nick $handle "Suspend Expires: [ctime [lindex [suspendinfo $chan $handle] 0]] $set(timezone)"
         notice $nick $handle " Suspend Reason: [getuser $handle xtra suspendr($chan)]"
@@ -146,7 +146,7 @@ proc all_access {type nick uhost handle chan text} {
           } else {
             set ona ""
           }
-          notice $nick $handle "[align $cn 5] [align $n 17] [align [level $n $chan] 6] [align [change [aop $n $chan] yesno] 5] [align [change [aov $n $chan] yesno] 5] [align [change [protect $n $chan] yesno] 5]$uha $ona"
+          notice $nick $handle "\002[align $cn 5]\002 [align $n 17] [align [level $n $chan] 6] [align [change [aop $n $chan] yesno] 5] [align [change [aov $n $chan] yesno] 5] [align [change [protect $n $chan] yesno] 5]$uha $ona"
           if {[suspend $n $chan]} {
             notice $nick $handle "Suspend Expires: [ctime [lindex [suspendinfo $chan $n] 0]] $set(timezone)"
             notice $nick $handle " Suspend Reason: [getuser $n xtra suspendr($chan)]"
@@ -165,7 +165,7 @@ proc all_access {type nick uhost handle chan text} {
         notice $nick $handle "There were no matches for your selected criteria"
       }
     }
-    notice $nick $handle "*** End of List ***"
+    notice $nick $handle "\002***\002 End of List \002***\002"
     putcmdlog "> !$handle! ($nick!$uhost) ACCESS\[$type\] ($chan): $text"
   }
 }
@@ -257,13 +257,13 @@ proc dcc_access {handle idx text} {
       set ma [lindex $text 1]
     }
     if {[string tolower [lindex $text 0]] == "-check"} {
-      putdcc $idx "*** Channel membership list for [lindex $text 1] on $chan ***"
+      putdcc $idx "\002***\002 Channel membership list for [lindex $text 1] on $chan \002***\002"
     } else {
-      putdcc $idx "*** $chan Database \[Match(Nick: [lindex $ma 0] Userhost: $ho) Min: [align $mn 3] Max: [align $mx 3]\] ***"
+      putdcc $idx "\002***\002 $chan Database \[Match(Nick: [lindex $ma 0] Userhost: $ho) Min: [align $mn 3] Max: [align $mx 3]\] \002***\002"
     }
-    putdcc $idx "      NickName          Level  AOP   AOV   Prot"
+    putdcc $idx "\002     \002 NickName          Level  AOP   AOV   Prot\002"
     if {[string tolower [lindex $text 0]] == "-check" && [level $ma $chan] > "0"} {
-      putdcc $idx "1     [align $ma 17] [align [level $ma $chan] 6] [align [change [aop $ma $chan] yesno] 5] [align [change [aov $ma $chan] yesno] 5] [align [change [protect $ma $chan] yesno] 5]"
+      putdcc $idx "\0021    \002 [align $ma 17] [align [level $ma $chan] 6] [align [change [aop $ma $chan] yesno] 5] [align [change [aov $ma $chan] yesno] 5] [align [change [protect $ma $chan] yesno] 5]"
       if {[suspend $handle $chan]} {
         putdcc $idx "Suspend Expires: [ctime [lindex [suspendinfo $chan $handle] 0]] $set(timezone)"
         putdcc $idx " Suspend Reason: [getuser $handle xtra suspendr($chan)]"
@@ -287,7 +287,7 @@ proc dcc_access {handle idx text} {
           } else {
             set ona ""
           }
-          putdcc $idx "[align $cn 5] [align $n 17] [align [level $n $chan] 6] [align [change [aop $n $chan] yesno] 5] [align [change [aov $n $chan] yesno] 5] [align [change [protect $n $chan] yesno] 5]$uha $ona"
+          putdcc $idx "\002[align $cn 5]\002 [align $n 17] [align [level $n $chan] 6] [align [change [aop $n $chan] yesno] 5] [align [change [aov $n $chan] yesno] 5] [align [change [protect $n $chan] yesno] 5]$uha $ona"
           if {[suspend $n $chan]} {
             putdcc $idx "Suspend Expires: [ctime [lindex [suspendinfo $chan $n] 0]] $set(timezone)"
             putdcc $idx " Suspend Reason: [getuser $n xtra suspendr($chan)]"
@@ -306,6 +306,6 @@ proc dcc_access {handle idx text} {
         putdcc $idx "There were no matches for your selected criteria"
       }
     }
-    putdcc $idx "*** End of List ***"
+    putdcc $idx "\002***\002 End of List \002***\002"
   }
 }

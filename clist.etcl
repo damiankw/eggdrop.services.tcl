@@ -38,7 +38,7 @@ proc msg_clist {nick uhost handle text} {
     }
     notice $nick $handle "Sending channel listing for $match to $sendnick ($sendhandle)"
     notice $sendnick $sendhandle "You requested a listing of channels that '$match' has access in. '$nick' ($handle) has requested I send you this information."
-    notice $sendnick $sendhandle "      Channel                        Level  AOP  AOV  Prot Status"
+    notice $sendnick $sendhandle "\002     \002 Channel                        Level  AOP  AOV  Prot Status\002"
     set cnt 1
     set cnter 0
     foreach chan [getchannelaccess $match] {
@@ -52,11 +52,11 @@ proc msg_clist {nick uhost handle text} {
       } else {
         set status \[inactive\]
       }
-      notice $sendnick $sendhandle "[align $cnt 5] [align [changet $chan channel] 30]  [align $level 5] [align [change $aop yesno] 4] [align [change $aov yesno] 4] [align [change $prot yesno] 5] $status"
+      notice $sendnick $sendhandle "\002[align $cnt 5]\002 [align [changet $chan channel] 30]  [align $level 5] [align [change $aop yesno] 4] [align [change $aov yesno] 4] [align [change $prot yesno] 5] $status"
       incr cnt 1
       incr cnter [llength [access $chan 1]]
     }
-    notice $sendnick $sendhandle "Found [expr $cnt - 1] matches out of $cnter database entries scanned for $match"
+    notice $sendnick $sendhandle "Found \002[expr $cnt - 1]\002 matches out of \002$cnter\002 database entries scanned for \002$match\002"
     putcmdlog "> !$handle! ($nick!$uhost) CLIST $match \[[expr $cnt - 1]/$cnter\]"
   }
 }

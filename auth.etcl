@@ -26,11 +26,11 @@ proc msg_deauth {nick uhost handle text} {
   } elseif {![passwdok $handle [lindex $text 0]]} {
     notice $nick $handle "Password mismatch for $handle"
   } elseif {[passwdok $handle [lindex $text 0]]} {
-    notice $nick $handle "Password accepted -- Authentication for $handle removed"
+    notice $nick $handle "\002Password accepted\002 -- Authentication for $handle removed"
     setuser $handle XTRA AUTH 0
     homechan "($nick!$uhost): successfully deauthenticated"
     if {[llength [notelist $handle new]] > "0"} {
-      notice $nick $handle "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read), Type: /msg $botnick list or /msg $botnick list new"
+      notice $nick $handle "You have a total of [llength [notelist $handle all]] notes ([llength [notelist $handle new]] unread, [llength [notelist $handle old]] read), Type: \002/msg $botnick list\002 or \002/msg $botnick list new\002"
     }
     deauth_automode $nick $handle
   }
@@ -57,11 +57,11 @@ proc msg_auth {nick uhost handle text} {
       homechan "($nick!$uhost): has no access and failed authentication as '$nick'"
       putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[wrong password/no access\]"
     } elseif {[passwdok $nick [lindex $text 0]] && [llength [getuser $nick HOSTS]] >= $set(maxhosts)} {
-      notice $nick $nick "Password Accepted -- Unfortunately you have no userhost slots left. Authentication failed"
+      notice $nick $nick "\002Password Accepted\002 -- Unfortunately you have no userhost slots left. Authentication failed"
       homechan "($nick!$uhost): no handle and passed authentication, no userhost slots left - authentication failed"
       putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[no userhost slots left\]"
     } elseif {[passwdok $nick [lindex $text 0]]} {
-      notice $nick $nick "Password Accepted -- You have been authenticated as $nick \[userhosts updated\]"
+      notice $nick $nick "\002Password Accepted\002 -- You have been authenticated as $nick \[userhosts updated\]"
       homechan "($nick!$uhost): successfully authenticated as '$nick' and userhosts updated"
       putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[passed/userhosts updated\]"
       setuser $nick HOSTS [maskhost $nick!$uhost]
@@ -78,7 +78,7 @@ proc msg_auth {nick uhost handle text} {
     homechan "\[$handle\]($nick!$uhost): wrong password.. failed authentication"
     putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[wrong password\]"
   } elseif {[passwdok $handle [lindex $text 0]]} {
-    notice $nick $handle "Password Accepted -- You have been authenticated as $handle"
+    notice $nick $handle "\002Password Accepted\002 -- You have been authenticated as $handle"
     homechan "\[$handle\]($nick!$uhost): successfully authenticated"
     putcmdlog "> !$handle! ($nick!$uhost) AUTH\[m\] \[passed\]"
     setuser $handle XTRA USERHOST $uhost

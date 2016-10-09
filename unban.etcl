@@ -119,10 +119,10 @@ proc all_unban {type nick uhost handle chan text} {
         killchanban $chan [lindex $ban 0]
         checkusers
         setuser &banlist& XTRA $chan,[lindex $ban 0]
-        notice $nick $handle "Ban [lindex $ban 0] removed on $chan"
+        notice $nick $handle "Ban \002[lindex $ban 0]\002 removed on $chan"
       }
       if {[isnum [lindex $rn 0]] && [lindex $rn 0] > [level $handle $chan] && [string tolower [lindex $ban 0]] == [string tolower [getstring [lindex $text 0]]]} {
-        notice $nick $handle "Ban [lindex $ban 0] requires level [lindex $rn 0] or higher to remove"
+        notice $nick $handle "Ban \002[lindex $ban 0]\002 requires level [lindex $rn 0] or higher to remove"
       }
       if {[string tolower [lindex $ban 0]] == [string tolower [getstring [lindex $text 0]]] && [ischanban [lindex $ban 0] $chan]} {
         pushmode $chan -b [lindex $ban 0]

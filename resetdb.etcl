@@ -51,7 +51,7 @@ proc all_resetdb {type nick uhost handle chan text} {
         incr count 1
       }
     }
-    notice $nick $handle "Removed $count users from $chan. Reset channel database to level $level and higher."
+    notice $nick $handle "Removed \002$count\002 users from $chan. Reset channel database to level $level and higher."
     putcmdlog "> !$handle! ($nick!$uhost) RESETDB\[$type\] ($chan): reset to level $level, removed $count users"
     homechan "\[$handle\]($nick!$uhost): reset channel database to level $level and higher (removed $count users)"
   }

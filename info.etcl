@@ -60,7 +60,7 @@ proc all_info {type nick uhost handle target} {
     foreach owner [changet $target owner] {
       set owners "$owners, $owner"
     }
-    notice $nick $handle "*** Channel information for $target (Peak: [lindex [changet $target peak] 0]) \[[changet $target hash]\] ***"
+    notice $nick $handle "\002***\002 Channel information for $target (Peak: [lindex [changet $target peak] 0]) \[[changet $target hash]\] \002***\002"
     notice $nick $handle "Registered To   : [string trim $owners ", "] ([nickinfo [lindex [changet $target owner] 0] userhost])"
     notice $nick $handle "Internet URL    : [changet $target url]"
     notice $nick $handle "Peak Set        : [ctime [lindex [changet $target peak] 1]] $set(timezone)"
@@ -74,7 +74,7 @@ proc all_info {type nick uhost handle target} {
     notice $nick $handle "Database Summary: [llength [access $target 1]] entries, with $quota quota, $banquota ban quota"
     if {[changet $target funmsg]} { notice $nick $handle "Game Settings   : Magic 8Ball, Mimic, Fun Messages" }
     notice $nick $handle "Owner Settings  : [ownersettings $target]"
-    notice $nick $handle "*** End of Information ***"
+    notice $nick $handle "\002***\002 End of Information \002***\002"
     putcmdlog "> !$handle! ($nick!$uhost) INFO\[$type\] $target"
   } elseif {![string match #* $target] && ![validuser $handle]} {
     return
@@ -92,7 +92,7 @@ proc all_info {type nick uhost handle target} {
     foreach tmp_chan [getchannelaccess $target] {
       set tmp_chans "$tmp_chans, [changet [lindex $tmp_chan 0] channel]"
     }
-    notice $nick $handle "*** Information about $target ***"
+    notice $nick $handle "\002***\002 Information about $target \002***\002"
     notice $nick $handle "Last Address : [nickinfo $target userhost]"
     if {[nickinfo $target realhost] != "0" && [isspecial $handle] >= "200"} {
       notice $nick $handle "Real Address : [nickinfo $target realhost]"
@@ -114,7 +114,7 @@ proc all_info {type nick uhost handle target} {
       notice $nick $handle "First Address: [nickinfo $target firsthost]"
     }
     notice $nick $handle "Options Set  : [nicksettings $target]"
-    notice $nick $handle "*** End of Information ***"
+    notice $nick $handle "\002***\002 End of Information \002***\002"
     putcmdlog "> !$handle! ($nick!$uhost) INFO\[$type\] $target"
   }
 }

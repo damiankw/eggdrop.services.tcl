@@ -148,7 +148,7 @@ proc all_ban {type nick uhost handle chan text} {
       return
     }
     if {[isban $bm $chan]} {
-      notice $nick $handle "Ban $bm already exists on $chan"
+      notice $nick $handle "Ban \002$bm\002 already exists on $chan"
       return
     }
     newchanban $chan $bm $handle "$lvl $nick!$uhost" $lt $st
@@ -168,7 +168,7 @@ proc all_ban {type nick uhost handle chan text} {
     } elseif {!$nk && [onchan [lindex $text 0] $chan]} {
       putkick $chan [lindex $text 0] "($nick) $rn"
     }
-    notice $nick $handle "Ban $bm added on $chan with level $lvl to remove"
+    notice $nick $handle "Ban \002$bm\002 added on $chan with level $lvl to remove"
     putcmdlog "> !$handle! ($nick!$uhost) BAN\[$type\] ($chan): $bm \[[charstrip $rn]\]"
   }
 }

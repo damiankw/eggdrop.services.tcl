@@ -80,7 +80,7 @@ proc all_fun {type nick uhost handle chan text} {
       msg $chan "you really think us bots are useless? ;)"
     } elseif {$command == "time"} {
       msg $chan "guess what time it is guys!"
-      puthelp "TOPIC $chan :Its party time"
+      puthelp "TOPIC $chan :Its \002party time\002"
       msg $chan "and you say bots are useless... geeezzz"
     } elseif {$command == "bonk" && [lindex $text 1] == ""} {
       msg $chan "ACTION wonders if $nick is bonkable?!?"
