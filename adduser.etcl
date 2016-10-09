@@ -48,8 +48,8 @@ proc all_adduser {type nick uhost handle chan text} {
     notice $nick $handle "[lindex $text 0] already exists in the $chan database as [nick2hand [lindex $text 0]], using hosts: [getuser [nick2hand [lindex $text 0]] HOSTS]"
   } elseif {[llength [access $chan]] >= [changet $chan quota] && [changet $chan quota] != "0"} {
     notice $nick $handle "The $chan database has [llength [access $chan]] users added and the quota is full, you may not add [lindex $text 0] here"
-  } elseif {[string tolower [lindex $text 0]] == [string tolower $set(chanop)]} {
-    notice $nick $handle "$set(chanop) (Channel Service) is unable to recieve access in any channels, as they cannot use it."
+  } elseif {[string tolower [lindex $text 0]] == [string tolower $set(chanserv)]} {
+    notice $nick $handle "$set(chanserv) (Channel Service) is unable to recieve access in any channels, as they cannot use it."
   } else {
     set cnt 0
     set uh [maskhost [lindex $text 0]![getchanhost [lindex $text 0]]]

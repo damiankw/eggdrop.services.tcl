@@ -113,8 +113,8 @@ proc all_access {type nick uhost handle chan text} {
       notice $nick $handle "*** $chan Database \[Match(Nick: [lindex $ma 0] Userhost: $ho) Min: [align $mn 3] Max: [align $mx 3]\] ***"
     }
     notice $nick $handle "      NickName          Level  AOP   AOV   Prot"
-    if {[string tolower [lindex $text 0]] == "-check" && [string tolower [lindex $text 1]] == [string tolower $set(chanop)]} {
-      notice $nick $handle "$set(chanop) doesn't need no access >:)"
+    if {[string tolower [lindex $text 0]] == "-check" && [string tolower [lindex $text 1]] == [string tolower $set(chanserv)]} {
+      notice $nick $handle "$set(chanserv) doesn't need no access >:)"
     } elseif {[string tolower [lindex $text 0]] == "-check" && [level $ma $chan] > "0"} {
       notice $nick $handle "1     [align $ma 17] [align [level $ma $chan] 6] [align [change [aop $ma $chan] yesno] 5] [align [change [aov $ma $chan] yesno] 5] [align [change [protect $ma $chan] yesno] 5]"
       if {[suspend $handle $chan]} {

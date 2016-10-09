@@ -130,7 +130,7 @@ proc action_topc {nick uhost handle chan topic} {
   chan_settings topic - $nick $uhost $handle $chan
   if {![changet $chan active] || [string tolower $nick] == [string tolower $botnick] || ($nick == "*" && $uhost == "*" && $handle == "*") || [backup_check $chan]} {
     return
-  } elseif {[changet $chan keeptopic] == "0" || [string tolower $nick] == [string tolower $set(chanop)]} {
+  } elseif {[changet $chan keeptopic] == "0" || [string tolower $nick] == [string tolower $set(chanserv)]} {
     chanset $chan topic $topic
   } elseif {[level $handle $chan] < [changet $chan keeptopic] || ![nickinfo $handle auth] || [nickinfo $handle userhost] != $uhost} {
     puthelp "TOPIC $chan :[changet $chan topic]"

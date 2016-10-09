@@ -42,8 +42,8 @@ proc all_deluser {type nick uhost handle chan text} {
     notice $nick $handle "Invalid request: What nick are you deleting?"
   } else {
     foreach u $text {
-      if {[string tolower $u] == [string tolower $set(chanop)]} {
-        notice $nick $handle "$set(chanop) (Channel Service) is unable to recieve access in any channels, therefore cannot be removed from any."
+      if {[string tolower $u] == [string tolower $set(chanserv)]} {
+        notice $nick $handle "$set(chanserv) (Channel Service) is unable to recieve access in any channels, therefore cannot be removed from any."
       } elseif {[level $u $chan] == "0"} {
         notice $nick $handle "$u is not currently in the $chan database"
       } elseif {[level $u $chan] == [level $handle $chan]} {

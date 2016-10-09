@@ -52,8 +52,8 @@ proc all_ban {type nick uhost handle chan text} {
     notice $nick $handle "[lindex $text 0] \[[nick2hand [lindex $text 0]]\] is a protected member, and their level of [level [nick2hand [lindex $text 0]] $chan] outranks your level of [level $handle $chan]"
   } elseif {[llength [banlist $chan]] >= [changet $chan banquota] && [changet $chan banquota] > "0"} {
     notice $nick $handle "The $chan banlist is full, you cannot ban anything else here."
-  } elseif {[string tolower [lindex $text 0]] == [string tolower $set(chanop)]} {
-    notice $nick $handle "$set(chanop) (Channel Service) is a protected member, and cannot be banned from this channel."
+  } elseif {[string tolower [lindex $text 0]] == [string tolower $set(chanserv)]} {
+    notice $nick $handle "$set(chanserv) (Channel Service) is a protected member, and cannot be banned from this channel."
   } else {
     set nk 0
     set st none

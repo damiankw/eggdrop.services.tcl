@@ -48,8 +48,8 @@ proc all_deop {type nick uhost handle chan text} {
         continue
       } elseif {[string tolower $u] == [string tolower $botnick]} {
         notice $nick $handle "I'm not going to deop myself."
-      } elseif {[string tolower $u] == [string tolower $set(chanop)]} {
-        notice $nick $handle "I cannot deop $set(chanop), so I am not going to try."
+      } elseif {[string tolower $u] == [string tolower $set(chanserv)]} {
+        notice $nick $handle "I cannot deop $set(chanserv), so I am not going to try."
       } elseif {[string tolower $u] == [string tolower $nick]} {
         pushmode $chan -o $u
       } elseif {[nick2hand $u] == ""} {

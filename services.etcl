@@ -14,7 +14,7 @@ proc serv_nickopauth {nick uhost handle text} {
   global set
   if {$set(nickpass) == ""} {
     putlog "> Attempted to authenticate to $set(nickserv) but no password set..."
-  } elseif {[string tolower $set(nickserv)] == [string tolower $nick] || [string tolower $set(noteop)] == [string tolower $nick] || [string tolower $set(chanop)] == [string tolower $nick]} {
+  } elseif {[string tolower $set(nickserv)] == [string tolower $nick] || [string tolower $set(noteop)] == [string tolower $nick] || [string tolower $set(chanserv)] == [string tolower $nick]} {
     putquick "$set(nickcmd) $set(nickserv) :identify $set(nickpass)"
     putlog "> $nick ($uhost) requested authentication... auto-authenticating"
   } else {
